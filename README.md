@@ -34,5 +34,5 @@ Once there is a preview request, this kit can collect the streaming and transfor
 ##### date:			2018-07-21
 ##### version:		v1.2
 ##### description:
-* *Add each ipc's info: metadata, send flag, tick, etc. when send h264, so as to distinguish different ipcs.* And modify each ipc's push_free function. 
+* **Add each ipc's info: metadata, send flag, tick, etc. when send h264, so as to distinguish different ipcs.** And modify each ipc's push_free function. 
 * Because of the loop contains between h264-rtmp.h and ipcs.h, move the definition of RTMPMetadata to ipcs.h.
