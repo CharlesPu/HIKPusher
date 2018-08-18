@@ -9,9 +9,10 @@
 #include <string.h>
 #include "config.h"
 #include "ipcs.h"
+#include "rtmp_log.h"  
+#include "log.h"
 
 struct _ipc IPCs[IPCS_MAX_NUM];
-
 /*************************************************
 @Description: init of the ipc struct
 @Input: 
@@ -80,7 +81,8 @@ int IPCS_PushInit(struct _ipc *ipc)
     sprintf(url_tmp + posi, "%s", ipc->dev_id);//printf("%s\n", url_tmp);                    
     if(!RTMP_SetupURL(rtmp, (char*)url_tmp))  
     {  
-       RTMP_Log(RTMP_LOGERROR, "SetupURL Err\n");  
+       // RTMP_Log(RTMP_LOGERROR, "SetupURL Err\n"); 
+       LOG_Print(ERR_NONE, "RTMP SetupURL Err\n");
        RTMP_Free(rtmp);  
        return 1;  
     }  
@@ -88,13 +90,15 @@ int IPCS_PushInit(struct _ipc *ipc)
     RTMP_EnableWrite(rtmp);       
 
     if (!RTMP_Connect(rtmp, NULL)){  
-       RTMP_Log(RTMP_LOGERROR, "Connect Err\n");  
+       // RTMP_Log(RTMP_LOGERROR, "Connect Err\n");  
+       LOG_Print(ERR_NONE, "RTMP Connect Err\n");
        RTMP_Free(rtmp);  
        return 2;  
     }  
 
     if (!RTMP_ConnectStream(rtmp, 0)){  
-       RTMP_Log(RTMP_LOGERROR, "ConnectStream Err\n");  
+       LOG_Print(ERR_NONE, "RTMP ConnectStream Err\n");
+       // RTMP_Log(RTMP_LOGERROR, "ConnectStream Err\n");  
        RTMP_Close(rtmp);  
        RTMP_Free(rtmp);  
        return 3;  

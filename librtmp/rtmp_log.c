@@ -28,7 +28,7 @@
 #include <ctype.h>
 
 #include "rtmp_sys.h"
-#include "log.h"
+#include "rtmp_log.h"
 
 #define MAX_PRINT_LEN	2048
 

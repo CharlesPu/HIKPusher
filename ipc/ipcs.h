@@ -9,7 +9,6 @@
 
 #include <sys/time.h>
 #include "rtmp_sys.h"  
-#include "log.h"  
 /*** _RTMPMetadata 内部结构体。该结构体主要用于存储和传递元数据信息*/ 
 typedef struct _RTMPMetadata  
 {  

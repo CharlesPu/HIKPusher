@@ -39,33 +39,11 @@ typedef struct _NaluUnit
 	unsigned char *data;  
 }NaluUnit;
 
-// /*** _RTMPMetadata 内部结构体。该结构体主要用于存储和传递元数据信息*/ 
-// typedef struct _RTMPMetadata  
-// {  
-// 	// video, must be h264 type   
-// 	unsigned int    nWidth;  
-// 	unsigned int    nHeight;  
-// 	unsigned int    nFrameRate; //帧率
-// 	unsigned int    nSpsLen;  
-// 	unsigned char   *Sps;  
-// 	unsigned int    nPpsLen;  
-// 	unsigned char   *Pps;   
-// } RTMPMetadata,*LPRTMPMetadata;  
-
-enum  
-{  
-	 VIDEO_CODECID_H264 = 7,  
-};     
-
-int H264_SendToRtmp(RTMP *rtmp, char* h264_buffer, int length, int (*read_buffer)(unsigned char *buf, int buf_size), struct _ipc* );  
+int H264_SendToRtmp(char* h264_buffer, int length, int (*read_buffer)(unsigned char *buf, int buf_size), struct _ipc* );  
 int H264_ReadOneNalu(NaluUnit* nalu, int (*read_buffer)(uint8_t *buf, int buf_size), struct _ipc *); 
 int H264_ReadFirstNalu(NaluUnit* nalu, struct _ipc *);
-int H264_SendH264Packet(RTMP *rtmp, unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc*);
+int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc*);
 int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned char * sps, int sps_len, unsigned int nTimeStamp);
 int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,unsigned char *data,unsigned int size,unsigned int nTimestamp);
-int H264_FreeSpsPps(void);
-
-
-int SendH264ToRtmp(RTMP *rtmp, char* h264_buf, int h264_len);
 
 #endif

@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-
 #include "sps_dec.h"
 
 SPS_UINT Ue(SPS_BYTE *pBuff, SPS_UINT nLen, SPS_UINT* nStartBit)

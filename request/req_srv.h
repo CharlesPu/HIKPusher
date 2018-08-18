@@ -30,7 +30,7 @@ struct _srv
 int REQ_ServerInit(struct _srv *);
 int REQ_SetNonblock(int fd);
 int REQ_ServerAccept(struct _srv *);//与客户端的连接
-int REQ_ServerSend(int , unsigned char* ,int);
+int REQ_ServerSend(int , unsigned char* , int);
 int REQ_ServerRecv(int, struct _srv *);
 int REQ_FreeServer(struct _srv *server);
 

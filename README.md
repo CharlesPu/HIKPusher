@@ -36,3 +36,10 @@ Once there is a preview request, this kit can collect the streaming and transfor
 ##### description:
 * **Add each ipc's info: metadata, send flag, tick, etc. when send h264, so as to distinguish different ipcs.** And modify each ipc's push_free function. 
 * Because of the loop contains between h264-rtmp.h and ipcs.h, move the definition of RTMPMetadata to ipcs.h.
+
+------------------------------
+##### date:			2018-08-18
+##### version:		v1.4
+##### description:
+* Change the directions of the project.
+* Add the record module(./record) of the project, hence the log files which can record the problems when running.

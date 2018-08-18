@@ -50,4 +50,9 @@
 #define IPCS_IS_ONLINE 1
 #define IPCS_IS_OFFLINE 0
 
+/*log*/
+// #define LOG_SAVE
+#define LOG_CONTENT_MAX_SIZE 256
+#define LOG_OUT_PATH "./logs/"
+
 #endif

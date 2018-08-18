@@ -14,6 +14,7 @@
 #include <sys/types.h>//数据类型定义
 #include <arpa/inet.h>//ip地址转换
 #include "req_srv.h"
+#include "log.h"
 
 /*************************************************
 @Description: request listen server init
@@ -33,7 +34,8 @@ int REQ_ServerInit(struct _srv *server)
 	server->listen_fd = socket(AF_INET, SOCK_STREAM, 0);//创建套接字
 	if (server->listen_fd == -1)
 	{
-		perror("error:fail to creat a socket!");
+		LOG_Print(ERR_NONE, "fail to creat a socket!");
+		// perror("error:fail to creat a socket!");
 		return 1;
 	}
 	int opt = 1;
@@ -50,21 +52,24 @@ int REQ_ServerInit(struct _srv *server)
 	if (temp == -1)
 	{
 		close(server->listen_fd);
-		perror("error:fail to bind port!");
+		LOG_Print(ERR_NONE, "fail to bind port!");
+		// perror("error:fail to bind port!");
 		return 2;
 	}
 	temp = listen(server->listen_fd, REQ_SRV_CLIE_MAX_NUM);
 	if (temp == -1)
 	{
 		close(server->listen_fd);
-		perror("error:fail to listen!");
+		LOG_Print(ERR_NONE, "fail to listen!");
+		// perror("error:fail to listen!");
 		return 3;
 	}
 	/************************epoll 创建********************/
 	server->ep_fd = epoll_create(REQ_SRV_CLIE_MAX_NUM);
 	if (server->ep_fd == -1)
 	{
-		perror("epoll create error");
+		LOG_Print(ERR_NONE, "epoll create error");
+		// perror("epoll create error");
 		return 4;
 	}
 	// if (Server::SetNonblock(server->listen_fd))//不知道需不需要！！因为去掉也可！但是注意成功地返回值是0！！！！记住！！
@@ -75,7 +80,8 @@ int REQ_ServerInit(struct _srv *server)
 	evt_temp.events  = EPOLLIN ;
 	if(epoll_ctl(server->ep_fd, EPOLL_CTL_ADD, server->listen_fd, &evt_temp) == -1)//挂到红黑树上去
 	{
-		perror("epoll_ctl listen_fd fail1");
+		LOG_Print(ERR_NONE, "epoll_ctl listen_fd fail1");
+		// perror("epoll_ctl listen_fd fail1");
 		return 6;
 	}
 	
@@ -121,8 +127,9 @@ int REQ_ServerAccept(struct _srv *server)
 
 	if (server->clie_fd == -1)
 	{
-		 perror("accept fail\n");
-		 return 1;
+		LOG_Print(ERR_NONE, "accept fail\n");
+		// perror("accept fail\n");
+		return 1;
 	}
 	else
 	{
@@ -131,12 +138,13 @@ int REQ_ServerAccept(struct _srv *server)
 		evt_temp.data.fd= server->clie_fd;
 		if(epoll_ctl(server->ep_fd, EPOLL_CTL_ADD, server->clie_fd, &evt_temp) == -1)//然后挂到红黑树上去
 		{
-			perror("epoll_ctl clie_fd fail!");
+			LOG_Print(ERR_NONE, "epoll_ctl clie_fd fail!");
+			// perror("epoll_ctl clie_fd fail!");
 			return 2;
 		}
 #ifdef PRINT_REQ_LINK
 		// printf("OK: Server has got connection from %s.\n",inet_ntoa(server->clie_addr.sin_addr));
-		printf("REQ_Server has connected to %s:%d, clie_fd:%d, connect num:%d\n",
+		LOG_Print(ERR_NONE, "REQ_Server has connected to %s:%d, clie_fd:%d, connect num:%d\n",
             inet_ntoa(server->clie_addr.sin_addr), ntohs(server->clie_addr.sin_port), server->clie_fd, ++(server->connect_num));//打印连接的客户端的编号
 #endif
 	}	
@@ -155,7 +163,8 @@ int REQ_ServerSend(int fd, unsigned char* buf, int length)
 	int num = write(fd, buf, length);
 	if (num != length)
 	{
-		perror("send fail!");
+		LOG_Print(ERR_NONE, "send fail!");
+		// perror("send fail!");
 		return -1;
 	}
 	return num;

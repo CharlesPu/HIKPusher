@@ -189,7 +189,7 @@ typedef BIGNUM * MP_t;
 
 #endif
 
-#include "log.h"
+#include "rtmp_log.h"
 #include "dhgroups.h"
 
 /* RFC 2631, Section 2.1.5, http://www.ietf.org/rfc/rfc2631.txt */

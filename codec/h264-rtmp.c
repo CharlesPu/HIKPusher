@@ -10,17 +10,12 @@
 
 #include "config.h"
 #include "h264-rtmp.h"
-#include "log.h"  
+#include "rtmp_log.h"  
 #include "rtmp_sys.h"   
 #include "amf.h"  
 #include "sps_dec.h"
-// static unsigned char *m_pFileBuf = NULL;  
-// static unsigned int  m_nFileBufSize = 0; 
-// static unsigned int  nalhead_pos = 0;
-// static RTMPMetadata metaData = {0};
-// static unsigned int tick = 0;
-// static unsigned int tick_gap = 0; 
-// static int flag = 0;
+#include "log.h"
+
 static int res = 0;
 /**
  * 将内存中的一段H.264编码的视频数据利用RTMP协议发送到服务器
@@ -32,7 +27,7 @@ static int res = 0;
  *                  返回值：成功读取的内存大小
  * @成功则返回0 , 失败则返回非0
  */ 
-int H264_SendToRtmp(RTMP *rtmp, char* h264_buffer, int h264_length, int (*read_buffer)(unsigned char *buf, int buf_size), struct _ipc* ipc)
+int H264_SendToRtmp(char* h264_buffer, int h264_length, int (*read_buffer)(unsigned char *buf, int buf_size), struct _ipc* ipc)
 {    
     // uint32_t now,last_update;
     ipc->nalhead_pos = 0;
@@ -89,9 +84,9 @@ int H264_SendToRtmp(RTMP *rtmp, char* h264_buffer, int h264_length, int (*read_b
                     if (naluUnit.type != NALU_TYPE_SPS && naluUnit.type != NALU_TYPE_PPS)
                     {
                         int bKeyframe  = (naluUnit.type == NALU_TYPE_IDR) ? TRUE : FALSE; // 5-IDR，首个I帧
-                        H264_SendH264Packet(rtmp, naluUnit.data, naluUnit.size, bKeyframe, ipc->tick, ipc);
+                        H264_SendH264Packet(naluUnit.data, naluUnit.size, bKeyframe, ipc->tick, ipc);
 #ifdef PRINT_RTMP_SEND_SIZE
-                        printf("NALU size:%8d\n", naluUnit.size);
+                        LOG_Print(ERR_NONE, "%s NALU size:%8d\n", ipc->dev_id, naluUnit.size);
 #endif
                         ipc->tick += ipc->tick_gap;
                         // now   = RTMP_GetTime();
@@ -105,7 +100,6 @@ int H264_SendToRtmp(RTMP *rtmp, char* h264_buffer, int h264_length, int (*read_b
 
     return 0;  
 }  
-
 /**
  * 从内存中读取出第一个Nal单元
  *
@@ -221,51 +215,25 @@ int H264_ReadOneNalu(NaluUnit* nalu, int (*read_buffer)(uint8_t *buf, int buf_si
         }
         else 
             continue;
-        /**
-         *special case1:parts of the nal lies in a file_buf and we have to read from buffer 
-         *again to get the rest part of this nal
-         */
-        // if((*head_pos) == GOT_A_NAL_CROSS_BUFFER || (*head_pos) == GOT_A_NAL_INCLUDE_A_BUFFER)
-        // {
-            // nalu->size = file_buf_size - nalustart;
-            // if(nalu->size > BUFFER_SIZE)
-            // {
-            //     m_pFileBuf_tmp_old = m_pFileBuf_tmp;    //// save pointer in case realloc fails
-            //     if((m_pFileBuf_tmp = (unsigned char*)realloc(m_pFileBuf_tmp, nalu->size)) ==  NULL )
-            //     {
-            //         free( m_pFileBuf_tmp_old );  // free original block
-            //         // free(m_pFileBuf_tmp);
-            //         return 2;
-            //     }
-            // }
-            // memcpy(m_pFileBuf_tmp + nalu->size + nalustart - naltail_pos, file_buf, naltail_pos - nalustart);
-            // nalu->data   = m_pFileBuf_tmp;
-            // (*head_pos)  = naltail_pos;
-            // return 0;
-        // }
-        //normal case:the whole nal is in this file_buf
-        // else 
-        {  
-            if ((*head_pos) == 0)
-            {
-                (*head_pos) = naltail_pos;
-                continue;
-            }
-            // middle ones
-            nalu->type = file_buf[(*head_pos)] & 0x1f; 
-            nalu->size = naltail_pos - (*head_pos) - nalustart;
-            if(nalu->type == NALU_TYPE_SEI || nalu->type == NALU_TYPE_AUD)//如果是补充增强信息 (SEI) or 分界符数据
-            {
-                (*head_pos) = naltail_pos;
-                continue;
-            }
-            // nalu->data = (unsigned char*)malloc(nalu->size);
-            // memset(nalu->data, 0, nalu->size);
-            // memcpy(nalu->data, file_buf + (*head_pos), nalu->size);
-            nalu->data = file_buf + (*head_pos);
+        if ((*head_pos) == 0)
+        {
             (*head_pos) = naltail_pos;
-            return 0;    
-        }                   
+            continue;
+        }
+        // middle ones
+        nalu->type = file_buf[(*head_pos)] & 0x1f; 
+        nalu->size = naltail_pos - (*head_pos) - nalustart;
+        if(nalu->type == NALU_TYPE_SEI || nalu->type == NALU_TYPE_AUD)//如果是补充增强信息 (SEI) or 分界符数据
+        {
+            (*head_pos) = naltail_pos;
+            continue;
+        }
+        // nalu->data = (unsigned char*)malloc(nalu->size);
+        // memset(nalu->data, 0, nalu->size);
+        // memcpy(nalu->data, file_buf + (*head_pos), nalu->size);
+        nalu->data = file_buf + (*head_pos);
+        (*head_pos) = naltail_pos;
+        return 0;                   
     }
 
     if (naltail_pos >= file_buf_size)//not find more 00 00 00 01 or 00 00 01, the last one
@@ -285,51 +253,6 @@ int H264_ReadOneNalu(NaluUnit* nalu, int (*read_buffer)(uint8_t *buf, int buf_si
         (*head_pos) = naltail_pos;
         return 0; 
     }
-    // if(naltail_pos >= file_buf_size && (*head_pos) != GOT_A_NAL_CROSS_BUFFER && (*head_pos) != GOT_A_NAL_INCLUDE_A_BUFFER)
-    // {
-    //     nalu->size = BUFFER_SIZE - (*head_pos);
-    //     nalu->type = file_buf[(*head_pos)] & 0x1f; 
-    //     memcpy(m_pFileBuf_tmp, file_buf + (*head_pos), nalu->size);
-    //     // if((ret = read_buffer(file_buf, file_buf_size)) < BUFFER_SIZE)
-    //     // {
-    //     //     memcpy(m_pFileBuf_tmp + nalu->size, file_buf, ret);
-    //     //     nalu->size   = nalu->size + ret;
-    //     //     nalu->data   = m_pFileBuf_tmp;
-    //     //     (*head_pos) = NO_MORE_BUFFER_TO_READ;
-    //     //     free(m_pFileBuf_tmp);
-    //     //     return 3;
-    //     // }
-    //     naltail_pos = 0;
-    //     (*head_pos) = GOT_A_NAL_CROSS_BUFFER;
-    //     continue;
-    // }
-    // if((*head_pos) == GOT_A_NAL_CROSS_BUFFER || (*head_pos) == GOT_A_NAL_INCLUDE_A_BUFFER)
-    // {
-    //     nalu->size = BUFFER_SIZE + nalu->size;
-            
-    //     m_pFileBuf_tmp_old = m_pFileBuf_tmp;    //// save pointer in case realloc fails
-    //     if((m_pFileBuf_tmp = (unsigned char*)realloc(m_pFileBuf_tmp, nalu->size)) ==  NULL )
-    //     {
-    //         free( m_pFileBuf_tmp_old );  // free original block
-    //         // free(m_pFileBuf_tmp);
-    //         return 4;
-    //     }
-
-    //     memcpy(m_pFileBuf_tmp + nalu->size - BUFFER_SIZE, file_buf, BUFFER_SIZE);
-        
-    //     // if((ret = read_buffer(file_buf,file_buf_size)) < BUFFER_SIZE)
-    //     // {
-    //     //     memcpy(m_pFileBuf_tmp + nalu->size, file_buf, ret);
-    //     //     nalu->size   = nalu->size + ret;
-    //     //     nalu->data   = m_pFileBuf_tmp;
-    //     //     (*head_pos) = NO_MORE_BUFFER_TO_READ;
-    //     //     free(m_pFileBuf_tmp);
-    //     //     return 5;
-    //     // }
-    //     naltail_pos = 0;
-    //     (*head_pos) = GOT_A_NAL_INCLUDE_A_BUFFER;
-    //     continue;
-    // }
 
     return 6;  
 } 
@@ -344,7 +267,7 @@ int H264_ReadOneNalu(NaluUnit* nalu, int (*read_buffer)(uint8_t *buf, int buf_si
  *
  * @成功则返回 0, 失败则返回-1
  */
-int H264_SendH264Packet(RTMP *rtmp, unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc* ipc)  
+int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc* ipc)  
 { 
     if(data == NULL && size < 11){  
         return -1;  
@@ -365,7 +288,7 @@ int H264_SendH264Packet(RTMP *rtmp, unsigned char *data, unsigned int size, int 
         body[i++] = size     & 0xff;
         // NALU data   
         memcpy(&(body[i]), data, size);  
-        H264_SendVideoSpsPps(rtmp, ipc->metaData.Pps, ipc->metaData.nPpsLen, ipc->metaData.Sps, ipc->metaData.nSpsLen, nTimeStamp);
+        H264_SendVideoSpsPps(ipc->rtmp, ipc->metaData.Pps, ipc->metaData.nPpsLen, ipc->metaData.Sps, ipc->metaData.nSpsLen, nTimeStamp);
         msleep(RTMP_SEND_INTVL);
     }else{  
         body[i++] = 0x27;// 2:Pframe  7:AVC   
@@ -383,7 +306,7 @@ int H264_SendH264Packet(RTMP *rtmp, unsigned char *data, unsigned int size, int 
     }  
 
     int bRet = 0;
-    bRet = H264_SendPacket(rtmp, RTMP_PACKET_TYPE_VIDEO, body, i + size, nTimeStamp);  
+    bRet = H264_SendPacket(ipc->rtmp, RTMP_PACKET_TYPE_VIDEO, body, i + size, nTimeStamp);  
     if (body != NULL)
     {
         free(body);
@@ -456,8 +379,8 @@ int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned c
     int nRet = RTMP_SendPacket(rtmp, packet, TRUE);
     if (!nRet)
     {  
-        RTMP_Log(RTMP_LOGERROR,"Send Error\n");  
-        // printf("errno%d\n", RTMP_LOGERROR); 
+        LOG_Print(ERR_NONE, "RTMP Send Error\n");  
+        // RTMP_Log(RTMP_LOGERROR,"Send Error\n");  
     }
     if (packet != NULL)
     {  
@@ -516,19 +439,3 @@ int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,unsigned char *data,uns
 
     return nRet;  
 }  
-
-int H264_FreeSpsPps(void)
-{
-    // if (metaData.Sps != NULL)
-    // {
-    //     free(metaData.Sps);
-    //     metaData.Sps = NULL;
-    // }
-    // if (metaData.Pps != NULL)
-    // {
-    //     free(metaData.Pps);
-    //     metaData.Pps = NULL;
-    // }
-
-    return 0;
-}

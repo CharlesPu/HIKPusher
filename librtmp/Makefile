@@ -78,7 +78,7 @@ CFLAGS=-Wall $(XCFLAGS) $(INC) $(DEF) $(OPT) $(SO_DEF)
 LDFLAGS=$(XLDFLAGS)
 
 
-OBJS=rtmp.o log.o amf.o hashswf.o parseurl.o
+OBJS=rtmp.o rtmp_log.o amf.o hashswf.o parseurl.o
 
 all:	librtmp.a $(SO_LIB)
 
@@ -92,11 +92,11 @@ librtmp$(SO_EXT): $(OBJS)
 	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
 	ln -sf $@ librtmp.$(SOX)
 
-log.o: log.c log.h Makefile
-rtmp.o: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h log.h amf.h Makefile
-amf.o: amf.c amf.h bytes.h log.h Makefile
+rtmp_log.o: rtmp_log.c rtmp_log.h Makefile
+rtmp.o: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h rtmp_log.h amf.h Makefile
+amf.o: amf.c amf.h bytes.h rtmp_log.h Makefile
 hashswf.o: hashswf.c http.h rtmp.h rtmp_sys.h Makefile
-parseurl.o: parseurl.c rtmp.h rtmp_sys.h log.h Makefile
+parseurl.o: parseurl.c rtmp.h rtmp_sys.h rtmp_log.h Makefile
 
 librtmp.pc: librtmp.pc.in Makefile
 	sed -e "s;@prefix@;$(prefix);" -e "s;@libdir@;$(libdir);" \
@@ -109,7 +109,7 @@ install:	install_base $(SO_INST)
 
 install_base:	librtmp.a librtmp.pc
 	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3 $(SODIR)
-	cp amf.h http.h log.h rtmp.h $(INCDIR)
+	cp amf.h http.h rtmp_log.h rtmp.h $(INCDIR)
 	cp librtmp.a $(LIBDIR)
 	cp librtmp.pc $(LIBDIR)/pkgconfig
 	cp librtmp.3 $(MANDIR)/man3

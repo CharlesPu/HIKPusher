@@ -27,7 +27,7 @@
 #include <time.h>
 
 #include "rtmp_sys.h"
-#include "log.h"
+#include "rtmp_log.h"
 #include "http.h"
 
 #ifdef CRYPTO

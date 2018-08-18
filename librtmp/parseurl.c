@@ -28,7 +28,7 @@
 #include <ctype.h>
 
 #include "rtmp_sys.h"
-#include "log.h"
+#include "rtmp_log.h"
 
 int RTMP_ParseURL(const char *url, int *protocol, AVal *host, unsigned int *port,
 	AVal *playpath, AVal *app)

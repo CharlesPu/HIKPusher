@@ -3,7 +3,7 @@
 @@Date       :  2017-06-25
 @@Mail       :  pu17rui@sina.com
 @@Description: 
-                ehome_sdk_demo
+                HIKPusher
 *******************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,14 +11,10 @@
 #include <time.h>
 #include <unistd.h> 
 #include "config.h"
-#include "cms.h"
+#include "cms_vtdu.h"
 #include "ipcs.h"
 #include "ps-rtmp.h"
-
-// LONG lLoginID = -1;
-// LONG lLinkHandle = -1;
-// LONG lRealHandle = -1;
-// FILE *Videofile = NULL;
+#include "log.h"
 
 extern struct _ipc IPCs[IPCS_MAX_NUM];
 //注册回调函数, CALLBACK is not defined as any value! (HCEHomePublic.h)
@@ -32,8 +28,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
           short int_dev_id = IPCS_GetInt_Devid(pDevInfo->byDeviceID, strlen((char*)(pDevInfo->byDeviceID)));
           IPCs[int_dev_id].login_id = lUserID;
           IPCs[int_dev_id].online_state = IPCS_IS_ONLINE;
-          // lLoginID = lUserID;
-          printf("On-line, lUserID: %ld, Device ID: %s\n", IPCs[int_dev_id].login_id, pDevInfo->byDeviceID);
+          LOG_Print(ERR_NONE, "On-line, lUserID: %ld, Device ID: %s\n", IPCs[int_dev_id].login_id, pDevInfo->byDeviceID);
        }
        //输入参数
        NET_EHOME_SERVER_INFO *pServerInfo = (NET_EHOME_SERVER_INFO *)pInBuffer;
@@ -42,7 +37,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
     }
     else if (ENUM_DEV_OFF == dwDataType)
     {
-        printf("Off-line, lUserID: %d", lUserID);
+        LOG_Print(ERR_NONE, "Off-line, lUserID: %d", lUserID);
         for (int i = 0; i < IPCS_MAX_NUM; ++i)
         {
             if (IPCs[i].login_id == lUserID)
@@ -53,11 +48,10 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
                 IPCs[i].login_id            = -1;
                 IPCs[i].stream_handle       = -1;
                 IPCs[i].preview_session_id  = -1;
-                printf(", Device ID: %s", IPCs[i].dev_id);
+                LOG_Print(ERR_NONE, ", Device ID: %s\n", IPCs[i].dev_id);
                 break;
             }
         }
-    	printf("\n");
     	NET_ECMS_ForceLogout(lUserID);       
     }
     else
@@ -99,7 +93,6 @@ void CALLBACK fnPREVIEW_DATA_CB(LONG lPreviewHandle, NET_EHOME_PREVIEW_CB_MSG *p
     {
         return ;
     }
-    // lRealHandle = lPreviewHandle;
     long int_dev_id = -1;
     for (int i = 0; i < IPCS_MAX_NUM; ++i)
     {
@@ -117,10 +110,8 @@ void CALLBACK fnPREVIEW_DATA_CB(LONG lPreviewHandle, NET_EHOME_PREVIEW_CB_MSG *p
 //VTDU预览请求回应回调函数
 BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG *pNewLinkCBMsg, void *pUserData)
 {
-    // lLinkHandle = lPreviewHandle;
-    printf("Callback of preview listening, Device ID: %s, Channel: %d\n", pNewLinkCBMsg->szDeviceID, pNewLinkCBMsg->dwChannelNo);
+    LOG_Print(ERR_NONE, "Callback of preview listening, Device ID: %s, Channel: %d\n", pNewLinkCBMsg->szDeviceID, pNewLinkCBMsg->dwChannelNo);
     short int_dev_id = IPCS_GetInt_Devid(pNewLinkCBMsg->szDeviceID, strlen((char*)(pNewLinkCBMsg->szDeviceID)));
-    // long preview_handle_tmp = IPCs[int_dev_id].stream_handle;
     IPCs[int_dev_id].stream_handle = lPreviewHandle;//printf("hand%ld\n", IPCs[int_dev_id].stream_handle);
     //预览数据回调参数
     NET_EHOME_PREVIEW_DATA_CB_PARAM struDataCB = {0};
@@ -129,10 +120,10 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
 
     if (!NET_ESTREAM_SetPreviewDataCB(IPCs[int_dev_id].stream_handle, &struDataCB))
     {
-        printf("NET_ESTREAM_SetPreviewDataCB failed, error code: %d\n", NET_ESTREAM_GetLastError());
+        LOG_Print(ERR_NONE, "NET_ESTREAM_SetPreviewDataCB failed, error code: %d\n", NET_ESTREAM_GetLastError());
         return FALSE;
     }
-    printf("NET_ESTREAM_SetPreviewDataCB!\n");
+    LOG_Print(ERR_NONE, "NET_ESTREAM_SetPreviewDataCB!\n");
 
     return TRUE;
 }

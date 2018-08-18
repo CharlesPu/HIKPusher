@@ -29,7 +29,7 @@
 
 #include "rtmp_sys.h"
 #include "amf.h"
-#include "log.h"
+#include "rtmp_log.h"
 #include "bytes.h"
 
 static const AMFObjectProperty AMFProp_Invalid = { {0, 0}, AMF_INVALID };
