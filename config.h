@@ -8,7 +8,7 @@
 // #define PRINT_REQ_LINK
 
 /**RTMP**/
-#define RTMP_URL "rtmp://47.100.183.68:1935/myapp/"
+#define RTMP_URL "rtmp://x.x.x.x:1935/myapp/"
 #define RTMP_CONNECTION_TIMEOUT 5  //s
 #define RTMP_SEND_INTVL 20  //ms
 
@@ -20,7 +20,7 @@
 /*******************************************************/
 /*NET_ESTREAM*/
 #define NET_ESTREAM_IP "0.0.0.0"
-#define NET_ESTREAM_PUBLIC_IP "47.100.183.68"
+#define NET_ESTREAM_PUBLIC_IP "x.x.x.x"
 #define NET_ESTREAM_PORT 8003
 /*NET_ECMS*/
 #define NET_ECMS_PORT 7660
