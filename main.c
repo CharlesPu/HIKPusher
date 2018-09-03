@@ -3,7 +3,7 @@
 @@Date       : 2017-06-04
 @@Mail       : pu17rui@sina.com
 @@Description: 
-	wish that I can transfer RTP to FLV successfully!!   
+	wish that I can transfer RTP to RTMP successfully!!   
 *******************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,17 +21,17 @@
 #include "log.h"
 
 /*global variables*/
-LONG lpreview_listen_handle = 0;
-LONG lListen_handle = 0;
+LONG gpreview_listen_handle = 0;
+LONG glisten_handle = 0;
 struct _srv req_srv;
 extern struct _ipc IPCs[IPCS_MAX_NUM];
 
 unsigned long GetTimeInterval(struct timeval* start, struct timeval* end);
-void SigHandler(int sig_num);
+void FreeAll(int sig_num);
 int main()
 {
     LOG_Init();
-    signal(SIGINT, SigHandler);//ctrl + c signal handler
+    signal(SIGINT, FreeAll);//ctrl + c signal handler
     IPCS_Init();
 	REQ_ServerInit(&req_srv);
     LOG_Print(ERR_NONE, "REQ_Listen_Server start listen! port:%d\n", REQ_SRV_PORT);
@@ -46,8 +46,8 @@ int main()
     struListen.pUser = NULL;
     struListen.byLinkMode = LINK_MODE_TCP; //0- TCP方式，1- UDP方式 
     //启动预览监听
-    lpreview_listen_handle = NET_ESTREAM_StartListenPreview(&struListen);
-    if(lpreview_listen_handle < -1)
+    gpreview_listen_handle = NET_ESTREAM_StartListenPreview(&struListen);
+    if(gpreview_listen_handle < -1)
     {
         LOG_Print(ERR_NONE, "NET_ESTREAM_StartListenPreview failed, error code: %d\n", NET_ESTREAM_GetLastError());
         NET_ESTREAM_Fini();
@@ -63,10 +63,9 @@ int main()
     memcpy(struCMSListenPara.struAddress.szIP, NET_ESTREAM_IP, sizeof(NET_ESTREAM_IP));
     struCMSListenPara.struAddress.wPort = NET_ECMS_PORT;
     struCMSListenPara.fnCB = RegisterCallBack;
-
     //启动监听，接收设备注册信息
-    lListen_handle = NET_ECMS_StartListen(&struCMSListenPara);
-    if(lListen_handle < -1)
+    glisten_handle = NET_ECMS_StartListen(&struCMSListenPara);
+    if(glisten_handle < -1)
     {
         LOG_Print(ERR_NONE, "NET_ECMS_StartListen failed, error code: %d\n", NET_ECMS_GetLastError());
         NET_ECMS_Fini();
@@ -81,7 +80,8 @@ int main()
 		if (fd_num < 0)
 		{
 			perror("epoll_wait fail\n");
-			break;
+            sleep(1);
+			continue;
 		}else
         if (fd_num == 0)
         {
@@ -138,7 +138,6 @@ int main()
                         struPreviewIn.dwStreamType = STREAM_TYPE_SUB; //码流类型：0- 主码流，1- 子码流, 2- 第三码流
                         memcpy(struPreviewIn.struStreamSever.szIP, NET_ESTREAM_PUBLIC_IP, sizeof(NET_ESTREAM_PUBLIC_IP));//流媒体服务器IP地址
                         struPreviewIn.struStreamSever.wPort = NET_ESTREAM_PORT; //流媒体服务器端口，需要跟服务器启动监听端口一致
-
                         //预览请求输出参数
                         NET_EHOME_PREVIEWINFO_OUT struPreviewOut = {0};
                         //预览请求
@@ -154,7 +153,6 @@ int main()
                         NET_EHOME_PUSHSTREAM_IN struPushStreamIn = {0};
                         struPushStreamIn.dwSize = sizeof(struPushStreamIn);
                         struPushStreamIn.lSessionID = IPCs[int_dev_id].preview_session_id; //SessionID，预览请求会话ID
-
                         //预览请求推流输出参数 
                         NET_EHOME_PUSHSTREAM_OUT struPushStreamOut = {0};
 
@@ -212,23 +210,7 @@ int main()
     }
     ////////////////////////////////////////////////////////////////////////
     //退出
-    //CMS停止监听
-    if(!NET_ECMS_StopListen(lListen_handle))
-        LOG_Print(ERR_NONE, "NET_ECMS_StopListen failed, error code: %d\n", NET_ECMS_GetLastError());
-    //CMS库反初始化，释放资源
-    NET_ECMS_Fini();
-    //VTDU停止预览监听
-    if(lpreview_listen_handle >= 0)
-        if (!NET_ESTREAM_StopListenPreview(lpreview_listen_handle))
-            LOG_Print(ERR_NONE, "NET_ESTREAM_StopListenPreview failed, error code: %d\n", NET_ECMS_GetLastError());
-    //取流库反初始化，释放资源
-    NET_ESTREAM_Fini();
-    REQ_FreeServer(&req_srv); 
-    for (int i = 0; i < IPCS_MAX_NUM; ++i)
-        if (IPCs[i].push_state == IPCS_IS_PUSHING_STREAM)
-            IPCS_PushFree(&(IPCs[i]));
-    LOG_Print(ERR_NONE, "Exit!\n");
-    LOG_Free();
+    FreeAll(0);
 
     return 0;
 }
@@ -247,17 +229,17 @@ unsigned long GetTimeInterval(struct timeval* start, struct timeval* end)
 
     return diff;
 } 
-void SigHandler(int sig_num)
+void FreeAll(int sig_num)
 {
     // LOG_Print(ERR_NONE, "sig_num:%d\n", sig_num);
     //CMS停止监听
-    if(!NET_ECMS_StopListen(lListen_handle))
+    if(!NET_ECMS_StopListen(glisten_handle))
         LOG_Print(ERR_NONE, "NET_ECMS_StopListen failed, error code: %d\n", NET_ECMS_GetLastError());
     //CMS库反初始化，释放资源
     NET_ECMS_Fini();
     //VTDU停止预览监听
-    if(lpreview_listen_handle >= 0)
-        if (!NET_ESTREAM_StopListenPreview(lpreview_listen_handle))
+    if(gpreview_listen_handle >= 0)
+        if (!NET_ESTREAM_StopListenPreview(gpreview_listen_handle))
             LOG_Print(ERR_NONE, "NET_ESTREAM_StopListenPreview failed, error code: %d\n", NET_ECMS_GetLastError());
     //取流库反初始化，释放资源
     NET_ESTREAM_Fini();

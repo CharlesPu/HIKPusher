@@ -25,7 +25,7 @@ LIB_DIR 	:= $(RTMP_LIB_DIR) $(EH_LIB_DIR)
 LIBS 		:= $(LIBS_RTMP) $(LIBS_EHOME)
 
 CC = g++
-CFLAGS = -O2 -Wall
+CFLAGS = -O2 -Wall -g
 INCFLAGS = $(foreach i, $(INC_DIR),-I$(i))
 LDFLAGS += $(foreach i, $(LIB_DIR),-L$(i))
 LDFLAGS += $(foreach i, $(LIBS),-l$(i))
