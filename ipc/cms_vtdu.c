@@ -63,6 +63,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
 
 //////////////////////////////////////////////////////////////////////
 //实时流数据处理
+// static FILE *Videofile = NULL;
 BOOL InputStreamData(long int_dev_id, BYTE byDataType, char* pBuffer, int iDataLen)
 {	
     
@@ -75,10 +76,10 @@ BOOL InputStreamData(long int_dev_id, BYTE byDataType, char* pBuffer, int iDataL
 
     // if(Videofile!= NULL)
     // {
-    //     // printf("len:%d buf:\n", iDataLen);
-    //     // for (int i = 0; i < iDataLen; ++i)
-    //     //     printf("0x%02x ", (unsigned char)pBuffer[i]);
-    //     // printf("\n");
+    //     printf("len:%d buf:\n", iDataLen);
+    //     for (int i = 0; i < iDataLen; ++i)
+    //         printf("0x%02x ", (unsigned char)pBuffer[i]);
+    //     printf("\n");
     //     fwrite(pBuffer,iDataLen,1,Videofile);  //回调实时流直接写文件，保存录像
     // }
 

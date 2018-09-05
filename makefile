@@ -3,7 +3,7 @@ DIR_CURR=./
 DIR_OBJ=./OBJ/
 
 C_SRCS  =$(wildcard ${DIR_CURR}*.c)
-C_SRCS +=$(wildcard ./codec/*.c) $(wildcard ./ipc/*.c) $(wildcard ./request/*.c)
+C_SRCS +=$(wildcard ./conv/*.c) $(wildcard ./ipc/*.c) $(wildcard ./request/*.c)
 C_SRCS +=$(wildcard ./record/*.c)
 		
 C_OBJS = ${patsubst %.c,${DIR_OBJ}%.o, ${notdir ${C_SRCS}}}

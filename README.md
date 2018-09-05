@@ -3,6 +3,19 @@
 A push kit of RTMP based on HikVision's EHome SDK(v4.0) that can accept the registration of HIK's IPCs and push streaming to RTMP server.
 Once there is a preview request, this kit can collect the streaming and transform the private RTP into RTMP, and then push it to any RTMP server, such as Red5 or nginx-rtmp module. Hence the real time monitoring. 
 
+----
+## software framework
+									  		  ____________________________________
+				requests 	 		    	 |									  |
+				from web		============>|	REQ_SRV     ===========>  	CMS   |======|
+								   socket    |									  |		 |
+									 		 |------------------------------------|		IPCs
+			streaming server 	             |									  |		 |
+			(nginx-rtmp, ...)   <============|  librtmp  <== conversion <== VTDU  |======|
+									RTMP 	 |------------------------------------|
+								   stream 	 |			    record, ...			  |
+									 		 |____________________________________|
+
 ------------------------------
 ## VERSIONS
 
