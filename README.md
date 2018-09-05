@@ -6,12 +6,12 @@ Once there is a preview request, this kit can collect the streaming and transfor
 ----
 ## software framework
                                       ____________________________________
-        requests                     |                                    |-------->>>>-------|
+        requests                     |                                    |========>>>>=======|
         from web        ============>|  REQ_SRV    ============>    CMS   | preview request   |
                            socket    |                                    |                   |
                                      |------------------------------------|                  IPCs
     streaming server                 |                                    |                   |
-    (nginx-rtmp, ...)   <============|  librtmp  <== conversion <== VTDU  |--------<<<<-------|
+    (nginx-rtmp, ...)   <============|  librtmp  <== conversion <== VTDU  |========<<<<=======|
                             RTMP 	 |------------------------------------|    RTP stream
                            stream    |              record, ...           |
                                      |____________________________________|
