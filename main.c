@@ -114,14 +114,16 @@ int main()
     			}else 
 				{		
                     //reg_pack : I P C S 00 0X 0X 0X
-                    short int_dev_id = IPCS_GetInt_Devid(req_srv.rxbuf + 6, bytes_num - 6);
+                    //receive_pack : s t a r t : I P C S 00 0X 0X 0X
+                    unsigned short int_dev_id = IPCS_GetInt_Devid(req_srv.rxbuf + 6, bytes_num - 6);
                     memcpy(&(IPCs[int_dev_id].last_req_time), &time_now , sizeof(struct timeval));
-                    if (IPCs[int_dev_id].push_state == IPCS_IS_NOT_PUSHING_STREAM)
+                    if (IPCs[int_dev_id].push_state == IPCS_NOT_PUSHING_STREAM// must be not pushing!
+                        && IPCs[int_dev_id].online_state == IPCS_ONLINE)//must be on line!
                     { 
                     /***********************start pushing!!!************************/ 
-                        if (IPCs[int_dev_id].online_state == IPCS_IS_OFFLINE//must be on line!
-                            || IPCs[int_dev_id].push_state == IPCS_IS_PUSHING_STREAM) // and is not pushing!
-                            continue;
+                        // if (IPCs[int_dev_id].online_state == IPCS_OFFLINE
+                        //     || IPCs[int_dev_id].push_state == IPCS_PUSHING_STREAM) 
+                        //     continue;
                         LOG_Print(ERR_NONE, "Starting device_id:%s, login_id:%ld .......\n"
                             , IPCs[int_dev_id].dev_id, IPCs[int_dev_id].login_id); 
                         if (IPCS_PushInit(&(IPCs[int_dev_id])))
@@ -166,7 +168,7 @@ int main()
                         LOG_Print(ERR_NONE, "NET_ECMS_StartPushRealStream! dev_id:%s, login_id:%ld\n"
                             , IPCs[int_dev_id].dev_id, IPCs[int_dev_id].login_id);
                         /*remember change the push_state*/
-                        IPCs[int_dev_id].push_state = IPCS_IS_PUSHING_STREAM;
+                        IPCs[int_dev_id].push_state = IPCS_PUSHING_STREAM;
                     }
 				}
 			}		
@@ -175,14 +177,15 @@ int main()
         unsigned long interval = 0;
         for (int i = 0; i < IPCS_MAX_NUM; ++i)
         {
-            if (IPCs[i].push_state == IPCS_IS_PUSHING_STREAM) //this ipc has started pushing stream!
+            if (IPCs[i].push_state == IPCS_PUSHING_STREAM//this ipc has started pushing stream!
+                && IPCs[i].online_state == IPCS_ONLINE) //must be on line!
             {
                 interval = GetTimeInterval(&(IPCs[i].last_req_time), &time_now); // us
                 if ( interval > IPCS_HEARTBEAT_INVL ) //user has left the web page(none heartbeat packs)
                 {
-                    if (IPCs[i].online_state == IPCS_IS_OFFLINE//must be on line!
-                        || IPCs[i].push_state == IPCS_IS_NOT_PUSHING_STREAM)//and must be pushing!
-                        continue;
+                    // if (IPCs[i].online_state == IPCS_OFFLINE
+                    //     || IPCs[i].push_state == IPCS_NOT_PUSHING_STREAM)//and must be pushing!
+                    //     continue;
                     /**************************stop preview************************/
                     // LOG_Print(ERR_NONE, "[%d]the interval:%ld \n", i, interval);
                     LOG_Print(ERR_NONE, "Stoping device_id:%s, login_id:%ld .......\n", IPCs[i].dev_id, IPCs[i].login_id);            
@@ -202,7 +205,7 @@ int main()
                     IPCS_PushFree(&(IPCs[i]));
                     LOG_Print(ERR_NONE, "NET_ECMS_StopPushRealStream! dev_id:%s, login_id:%ld\n", IPCs[i].dev_id, IPCs[i].login_id);
                     /*remember change the push_state*/
-                    IPCs[i].push_state = IPCS_IS_NOT_PUSHING_STREAM;
+                    IPCs[i].push_state = IPCS_NOT_PUSHING_STREAM;
                 }
             }
         }
@@ -245,7 +248,7 @@ void FreeAll(int sig_num)
     NET_ESTREAM_Fini();
     REQ_FreeServer(&req_srv);  
     for (int i = 0; i < IPCS_MAX_NUM; ++i)
-        if (IPCs[i].push_state == IPCS_IS_PUSHING_STREAM)
+        if (IPCs[i].push_state == IPCS_PUSHING_STREAM)
             IPCS_PushFree(&(IPCs[i]));
     LOG_Print(ERR_NONE, "Exit!\n");
     LOG_Free();

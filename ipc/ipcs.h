@@ -24,31 +24,32 @@ typedef struct _RTMPMetadata
 
 struct _ipc
 {
-	long login_id;
-	long stream_handle;
-	long preview_session_id; //struPreviewOut.lSessionID
-	char dev_id[13];
-	struct timeval last_req_time;
-	char push_state;//is pushing or not 
-	char online_state; 
-	/*ps send*/
-	RTMP *rtmp;
+	/*交互状态相关*/
+	long login_id;					//系统分配的登录ID
+	long stream_handle;				//实时流句柄
+	long preview_session_id; 		//系统分配的预览会话ID                         struPreviewOut.lSessionID
+	char dev_id[13];				//字符串形式的设备ID
+	struct timeval last_req_time;	//上一次预览请求时间
+	char push_state;				//是否在推流
+	char online_state;				//是否在线
+	/*解析RTP流相关*/
 	char *full_h264pack;
-    int full_h264pack_len;
-    /*h264 send*/
+    int  full_h264pack_len;
+    /*封装RTMP流相关*/
+    RTMP *rtmp;
     unsigned char *m_pFileBuf;  
 	unsigned int  m_nFileBufSize; 
 	unsigned int  nalhead_pos;
-	RTMPMetadata metaData;
-	unsigned int tick;
-	unsigned int tick_gap; 
-	int pps_sps_flag;
+	RTMPMetadata  metaData;
+	unsigned int  tick;
+	unsigned int  tick_gap; 
+	int 	      pps_sps_flag;
 };
 
 int IPCS_Init(void);
 int IPCS_PushInit(struct _ipc *);
 int IPCS_PushFree(struct _ipc *);
-short IPCS_GetInt_Devid(unsigned char *msgs, int len);
+unsigned short IPCS_GetInt_Devid(unsigned char *msgs, int len);
 
 
 

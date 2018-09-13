@@ -56,3 +56,10 @@ Once there is a preview request, this kit can collect the streaming and transfor
 ##### description:
 * Change the directions of the project.
 * Add the record module(./record) of the project, hence the log files which can record the problems when running.
+
+------------------------------
+##### date:     2018-09-13
+##### version:    v1.4.2
+##### description:
+* Change the macro name of ipc's states.
+* Fix some bugs about the judgements of ipc's states.

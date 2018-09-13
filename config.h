@@ -45,10 +45,10 @@
 #define IPCS_EPOLL_WAIT_TIME 5000  //ms  
 #define IPCS_HEARTBEAT_INVL 4000000  //us  // 4s cause the delay of the internet
 //states
-#define IPCS_IS_PUSHING_STREAM 1
-#define IPCS_IS_NOT_PUSHING_STREAM 0
-#define IPCS_IS_ONLINE 1
-#define IPCS_IS_OFFLINE 0
+#define IPCS_PUSHING_STREAM 1
+#define IPCS_NOT_PUSHING_STREAM 0
+#define IPCS_ONLINE 1
+#define IPCS_OFFLINE 0
 
 /*log*/
 #define LOG_SAVE

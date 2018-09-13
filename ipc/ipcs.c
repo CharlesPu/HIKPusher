@@ -43,8 +43,8 @@ int IPCS_Init(void)
 		// printf("dev_id:%s \n", IPCs[i].dev_id);
 
 		memset(&(IPCs[i].last_req_time), 0, sizeof(IPCs[i].last_req_time));
-		IPCs[i].push_state 				= IPCS_IS_NOT_PUSHING_STREAM;
-		IPCs[i].online_state 			= IPCS_IS_OFFLINE;
+		IPCs[i].push_state 				= IPCS_NOT_PUSHING_STREAM;
+		IPCs[i].online_state 			= IPCS_OFFLINE;
 
 		IPCs[i].rtmp = NULL;
 		IPCs[i].pps_sps_flag = 0;
@@ -182,10 +182,10 @@ int IPCS_PushFree(struct _ipc *ipc)
 @Description: Get Devid(int)
 @Input: req_serv's recv buf; buf's length
 @Output: 
-@Return: others - Devid   -1 - fail
+@Return: 
 @Others: //reg_pack : I P C S 00 0X 0X 0X
 *************************************************/
-short IPCS_GetInt_Devid(unsigned char *msgs, int len)
+unsigned short IPCS_GetInt_Devid(unsigned char *msgs, int len)
 {
 	char str_user_id[2] = {0};//must be 2 cause the '\0'
 	char str_loc_id[2]  = {0};
@@ -203,7 +203,7 @@ short IPCS_GetInt_Devid(unsigned char *msgs, int len)
 	short sta_id  = strtol(str_sta_id, NULL, 16);
 	// printf("usr:0x%02x, loc:0x%02x, sta:0x%02x\n", user_id, loc_id, sta_id);
 
-	short int_dev_id = (user_id << 8) + (loc_id << 4) + sta_id;
+	unsigned short int_dev_id = (user_id << 8) + (loc_id << 4) + sta_id;
 	// printf("int_dev_id:%d\n", int_dev_id);
 
 	return int_dev_id;

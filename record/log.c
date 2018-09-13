@@ -40,7 +40,7 @@ int LOG_Save(char* data, int len)
 	timenow = localtime(&now);
 	// printf("Local time is %s", asctime(timenow));
 	/* the file name */
-	sprintf(file_name, "%sLog_%d%02d%02d", LOG_OUT_PATH, 
+	sprintf(file_name, "%slog_%d%02d%02d", LOG_OUT_PATH, 
 				timenow->tm_year + 1900, timenow->tm_mon + 1, timenow->tm_mday);
 	// printf("%s\n", file_name);
 	pthread_mutex_lock(&gLOG_out_file_mutex);
