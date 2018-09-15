@@ -12,9 +12,6 @@
 #include <unistd.h> 
 #include <signal.h>
 #include "config.h"
-#include "ps-h264.h"
-#include "h264-rtmp.h"
-#include "ps-rtmp.h"
 #include "cms_vtdu.h"
 #include "req_srv.h"
 #include "ipcs.h"

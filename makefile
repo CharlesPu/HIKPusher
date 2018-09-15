@@ -31,10 +31,10 @@ LDFLAGS += $(foreach i, $(LIB_DIR),-L$(i))
 LDFLAGS += $(foreach i, $(LIBS),-l$(i))
 DY_LDFLAGS =-Wl,-rpath=$(EH_LIB_DIR)
 
-all:$(EXEC)
+all:clean $(EXEC)
 
 $(EXEC):$(C_OBJS)
-	cd ./librtmp && make	
+	cd ./librtmp && make
 	$(CC) -o $@ $(C_OBJS) $(LDFLAGS)
 	@echo "Make Done~"
 

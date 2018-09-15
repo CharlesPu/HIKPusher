@@ -6,20 +6,20 @@ Once there is a preview request, this kit can collect the streaming and transfor
 ----
 ## software framework
                                       ____________________________________
-        requests                     |                                    |========>>>>=======|
+        requests                     |                                    |========>>>>=======+
         from web        ============>|  REQ_SRV    ============>    CMS   | preview request   |
                            socket    |                                    |                   |
                                      |------------------------------------|                  IPCs
     streaming server                 |                                    |                   |
-    (nginx-rtmp, ...)   <============|  librtmp  <== conversion <== VTDU  |========<<<<=======|
-                            RTMP 	 |------------------------------------|    RTP stream
+    (nginx-rtmp, ...)   <============|  librtmp  <== conversion <== VTDU  |========<<<<=======+
+                            RTMP 	   |------------------------------------|    RTP stream
                            stream    |              record, ...           |
                                      |____________________________________|
 
 ------------------------------
 ## VERSIONS
 
-##### date:			2018-07-15
+##### date:			  2018-07-15
 ##### version:		v1.0
 ##### description:
 * Finish the decoding of private RTP to H264 streaming.
@@ -35,7 +35,7 @@ Once there is a preview request, this kit can collect the streaming and transfor
 * Add the signal handler function of signal "ctrl + c", hence the release of all memory resources such as req_srv buf and ipc's push buf when use "ctrl + c" to exit the main function. As a result, some variables has changed to global ones due to the reference in signal handler function.
 
 ------------------------------
-##### date:			2018-07-17
+##### date:			  2018-07-17
 ##### version:		v1.0.4
 ##### description:
 * Change every ipc's rtmp url, the end of url is dev_id.
@@ -44,22 +44,29 @@ Once there is a preview request, this kit can collect the streaming and transfor
 * Change the project name(from "eh_rtmp_demo" to "HIKPusher").
 
 ------------------------------
-##### date:			2018-07-21
+##### date:			  2018-07-21
 ##### version:		v1.2
 ##### description:
 * **Add each ipc's info: metadata, send flag, tick, etc. when send h264, so as to distinguish different ipcs.** And modify each ipc's push_free function. 
 * Because of the loop contains between h264-rtmp.h and ipcs.h, move the definition of RTMPMetadata to ipcs.h.
 
 ------------------------------
-##### date:			2018-08-18
+##### date:			  2018-08-18
 ##### version:		v1.4
 ##### description:
 * Change the directions of the project.
 * Add the record module(./record) of the project, hence the log files which can record the problems when running.
 
 ------------------------------
-##### date:     2018-09-13
+##### date:       2018-09-13
 ##### version:    v1.4.2
 ##### description:
 * Change the macro name of ipc's states.
 * Fix some bugs about the judgements of ipc's states.
+
+------------------------------
+##### date:       2018-09-14
+##### version:    v1.4.4
+##### description:
+* Change the file name of ps/h264 parser and some function name in 'conv' to look more clear.
+* Change the **struct _ipc**, remove 'm_pFileBuf' because its duplication with 'full_h264pack'.

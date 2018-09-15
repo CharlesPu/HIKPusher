@@ -13,7 +13,7 @@
 #include "config.h"
 #include "cms_vtdu.h"
 #include "ipcs.h"
-#include "ps-rtmp.h"
+#include "rtp-rtmp.h"
 #include "log.h"
 
 extern struct _ipc IPCs[IPCS_MAX_NUM];
@@ -67,7 +67,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
 BOOL InputStreamData(long int_dev_id, BYTE byDataType, char* pBuffer, int iDataLen)
 {	
     
-    PS_SendToRtmp(&(IPCs[int_dev_id]), pBuffer, iDataLen);
+    RTP_SendToRtmp(&(IPCs[int_dev_id]), pBuffer, iDataLen);
     // if(Videofile == NULL)
     // {
     //     Videofile = fopen("test.rtp","wb");

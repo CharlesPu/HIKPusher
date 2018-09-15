@@ -33,17 +33,17 @@ struct _ipc
 	char push_state;				//是否在推流
 	char online_state;				//是否在线
 	/*解析RTP流相关*/
-	char *full_h264pack;
-    int  full_h264pack_len;
+	unsigned char *full_h264pack;	//n个nalu的h264裸流包 						(实际1个...)
+    unsigned int  full_h264pack_len;//n个nalu的h264裸流包的大小
     /*封装RTMP流相关*/
     RTMP *rtmp;
-    unsigned char *m_pFileBuf;  
-	unsigned int  m_nFileBufSize; 
-	unsigned int  nalhead_pos;
-	RTMPMetadata  metaData;
+ //    unsigned char *m_pFileBuf;   	//n个nalu的h264裸流包(实际1个...)
+	// unsigned int  m_nFileBufSize; 	//n个nalu的h264裸流包的大小
+	unsigned int  nalhead_pos;		//指向full_h264pack中每个nalu的开头(不包括00 00 00 01)
+	RTMPMetadata  metaData;			//元数据
 	unsigned int  tick;
 	unsigned int  tick_gap; 
-	int 	      pps_sps_flag;
+	int 	      pps_sps_flag;		//标志第几帧
 };
 
 int IPCS_Init(void);

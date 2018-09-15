@@ -14,9 +14,6 @@
 
 /*H264*/
 #define H264_FULLPACK_MAX_SIZE 262144
-
-/*NALU*/
-#define NALU_TYPE_IDR 0x05
 /*******************************************************/
 /*NET_ESTREAM*/
 #define NET_ESTREAM_IP "0.0.0.0"
