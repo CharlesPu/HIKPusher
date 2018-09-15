@@ -12,7 +12,7 @@ Once there is a preview request, this kit can collect the streaming and transfor
                                      |------------------------------------|                  IPCs
     streaming server                 |                                    |                   |
     (nginx-rtmp, ...)   <============|  librtmp  <== conversion <== VTDU  |========<<<<=======+
-                            RTMP 	   |------------------------------------|    RTP stream
+                            RTMP     |------------------------------------|    RTP stream
                            stream    |              record, ...           |
                                      |____________________________________|
 
