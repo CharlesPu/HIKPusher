@@ -23,25 +23,15 @@
 #define NALU_TYPE_EOSTREAM 	0x0b
 #define NALU_TYPE_FILL 		0x0c
 
-//定义包头长度，RTMP_MAX_HEADER_SIZE=18
-#define RTMP_HEAD_SIZE   (sizeof(RTMPPacket) + RTMP_MAX_HEADER_SIZE)
-//存储Nal单元数据的buffer大小
-#define BUFFER_SIZE 32768
-//搜寻Nal单元时的一些标志
-#define GOT_A_NAL_CROSS_BUFFER (BUFFER_SIZE + 1)
-#define GOT_A_NAL_INCLUDE_A_BUFFER (BUFFER_SIZE + 2)
-#define NO_MORE_BUFFER_TO_READ (BUFFER_SIZE + 3)
-/*** _NaluUnit 内部结构体。该结构体主要用于存储和传递Nal单元的类型、大小和数据*/ 
-typedef struct _NaluUnit  
+typedef struct _NalUnit  
 {  
 	int type;  
     int size;  
 	unsigned char *data;  
-}NaluUnit;
+}NalUnit;
 
 int H264_SendToRtmp(struct _ipc* );  
-int H264_ReadOneNalu(NaluUnit* nalu, struct _ipc *); 
-int H264_ReadFirstNalu(NaluUnit* nalu, struct _ipc *);
+int H264_ParserNALU(NalUnit* nalu, struct _ipc* ipc);
 int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc*);
 int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned char * sps, int sps_len, unsigned int nTimeStamp);
 int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,unsigned char *data,unsigned int size,unsigned int nTimestamp);

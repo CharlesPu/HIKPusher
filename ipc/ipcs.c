@@ -50,10 +50,7 @@ int IPCS_Init(void)
 		IPCs[i].pps_sps_flag = 0;
 		IPCs[i].full_h264pack = NULL;
 	    IPCs[i].full_h264pack_len = 0;
-
-	 //    IPCs[i].m_pFileBuf = NULL;  
-		// IPCs[i].m_nFileBufSize = 0; 
-		IPCs[i].nalhead_pos = 0;
+	    
 		memset(&(IPCs[i].metaData), 0, sizeof(IPCs[i].metaData));
 		IPCs[i].tick = 0;
 		IPCs[i].tick_gap = 0; 
@@ -112,9 +109,6 @@ int IPCS_PushInit(struct _ipc *ipc)
     ipc->full_h264pack_len = 0;
 
     ipc->pps_sps_flag = 0;
-	// ipc->m_pFileBuf = NULL;  
-	// ipc->m_nFileBufSize = 0; 
-	ipc->nalhead_pos = 0;
 	//in case...
 	if (ipc->metaData.Sps != NULL)
 	{
@@ -157,9 +151,6 @@ int IPCS_PushFree(struct _ipc *ipc)
     	ipc->full_h264pack = NULL;
     }
     ipc->pps_sps_flag = 0;
-	// ipc->m_pFileBuf = NULL;  
-	// ipc->m_nFileBufSize = 0; 
-	ipc->nalhead_pos = 0;
 	//must free first!
 	if (ipc->metaData.Sps != NULL)
 	{

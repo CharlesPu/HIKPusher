@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "config.h"
 #include "parser_h264.h"
 #include "rtmp_log.h"  
@@ -15,8 +14,6 @@
 #include "amf.h"  
 #include "sps_dec.h"
 #include "log.h"
-
-static int res = 0;
 /*************************************************
 @Description: 将内存中的一段H.264编码的视频数据利用RTMP协议发送到服务器
 @Input:  *ipc
@@ -26,227 +23,104 @@ static int res = 0;
 *************************************************/ 
 int H264_SendToRtmp(struct _ipc* ipc)
 {    
-    // uint32_t now,last_update;
-    ipc->nalhead_pos = 0;
-    int *flag = &(ipc->pps_sps_flag);
-    // printf("buflen%d\n", m_nFileBufSize);
     // for (int i = 0 ; i < 10; ++i)
     //     printf("%02x ", (unsigned char)m_pFileBuf[i]); 
     // printf("\n");
-    NaluUnit naluUnit;  
-    switch ((*flag))
-    {
-        case 0:
-            {   // 读取SPS帧   
-                memset(&(ipc->metaData), 0, sizeof(RTMPMetadata));
-                H264_ReadFirstNalu(&naluUnit, ipc);  
-                ipc->metaData.nSpsLen = naluUnit.size;  
-                ipc->metaData.Sps     = NULL;
-                ipc->metaData.Sps     = (unsigned char*)malloc(naluUnit.size);
-                memcpy(ipc->metaData.Sps, naluUnit.data, naluUnit.size);
+    NalUnit nalUnit; 
 
-                (*flag)++;
-                break;
-            }
-        case 1:
-            {    // 读取PPS帧   
-                H264_ReadOneNalu(&naluUnit, ipc);  
-                ipc->metaData.nPpsLen = naluUnit.size; 
-                ipc->metaData.Pps     = NULL;
-                ipc->metaData.Pps     = (unsigned char*)malloc(naluUnit.size);
-                memcpy(ipc->metaData.Pps, naluUnit.data, naluUnit.size);
-                // 解码SPS PPS,获取视频图像宽、高信息   
-                int width = 0, height = 0, fps = 0;  
-                H264_DecodeSPS(ipc->metaData.Sps, ipc->metaData.nSpsLen, &width, &height, &fps);  
-                //ipc->metaData.nWidth = width;  
-                //ipc->metaData.nHeight = height;  
-                // printf("fps:%d\n", fps);
-                if(fps)
-                    ipc->metaData.nFrameRate = fps; 
-                else
-                    ipc->metaData.nFrameRate = 25;
-                ipc->tick_gap = 1000 / ipc->metaData.nFrameRate;
-                //发送PPS,SPS
-                //SendVideoSpsPps(ipc->metaData.Pps,ipc->metaData.nPpsLen,ipc->metaData.Sps,ipc->metaData.nSpsLen);
-                (*flag)++;
-                break;
-            }
+    if(H264_ParserNALU(&nalUnit, ipc)) return 1;
+    switch(nalUnit.type)
+    {
+        case NALU_TYPE_SPS:
+        {
+            ipc->metaData.nSpsLen = nalUnit.size;
+            if (ipc->metaData.Sps == NULL)
+                ipc->metaData.Sps = (unsigned char*)malloc(nalUnit.size);
+            memcpy(ipc->metaData.Sps, nalUnit.data, nalUnit.size);
+            break;
+        }
+        case NALU_TYPE_PPS:
+        {
+            ipc->metaData.nPpsLen = nalUnit.size;
+            if (ipc->metaData.Pps == NULL)
+                ipc->metaData.Pps = (unsigned char*)malloc(nalUnit.size);
+            memcpy(ipc->metaData.Pps, nalUnit.data, nalUnit.size);
+            // 解码SPS PPS,获取视频图像宽、高信息   
+            int width = 0, height = 0, fps = 0;  
+            H264_DecodeSPS(ipc->metaData.Sps, ipc->metaData.nSpsLen, &width, &height, &fps);  
+            //ipc->metaData.nWidth = width;  
+            //ipc->metaData.nHeight = height;  
+            if(fps)
+                ipc->metaData.nFrameRate = fps; 
+            else
+                ipc->metaData.nFrameRate = 25;
+            ipc->tick_gap = 1000 / ipc->metaData.nFrameRate;
+            break;
+        }
         default:
-            {
-                while(!(res=H264_ReadOneNalu(&naluUnit, ipc)))  
-                {    
-                    if (naluUnit.type != NALU_TYPE_SPS && naluUnit.type != NALU_TYPE_PPS)
-                    {
-                        int bKeyframe  = (naluUnit.type == NALU_TYPE_IDR) ? TRUE : FALSE; // 5-IDR，首个I帧
-                        H264_SendH264Packet(naluUnit.data, naluUnit.size, bKeyframe, ipc->tick, ipc);
+        {
+            int bKeyframe  = (nalUnit.type == NALU_TYPE_IDR) ? TRUE : FALSE; // key frame
+            H264_SendH264Packet(nalUnit.data, nalUnit.size, bKeyframe, ipc->tick, ipc);
 #ifdef PRINT_RTMP_SEND_SIZE
-                        LOG_Print(ERR_NONE, "%s NALU size:%8d\n", ipc->dev_id, naluUnit.size);
+            LOG_Print(ERR_NONE, "%s NALU size:%8d\n", ipc->dev_id, nalUnit.size);
 #endif
-                        ipc->tick += ipc->tick_gap;
-                        // now   = RTMP_GetTime();
-                        // msleep(tick_gap-now+last_update);  
-                        msleep(RTMP_SEND_INTVL);
-                    }
-                } 
-                break;
-            }
+            ipc->tick += ipc->tick_gap; 
+            msleep(RTMP_SEND_INTVL);
+            break;
+        }
     }
 
     return 0;  
-}  
+} 
 /*************************************************
-@Description: 从n个nal单元中读取每一个nalu(去除00 00 00 01)
+@Description: 从1个nal单元中读取一个nalu(去除00 00 00 01 or 00 00 01)
 @Input: *nalu  *ipc
 @Output: nalu
-@Return: 找到第一个nalu返回0
-@Others: *nalu为传入传出参数，没有堆，指向00 00 00 01之后的一个nalu
-*************************************************/ 
-int H264_ReadFirstNalu(NaluUnit* nalu, struct _ipc* ipc) 
+@Return: 0 - success, others - fail 
+@Others: *nalu为传入传出参数，没有堆，指向00 00 00 01 or 00 00 01之后的一个nalu
+*************************************************/  
+int H264_ParserNALU(NalUnit* nalu, struct _ipc* ipc) 
 {
-    unsigned int naltail_pos = 0;
     unsigned char *nalus_buf = ipc->full_h264pack;
     unsigned int nalus_buf_len = ipc->full_h264pack_len;
+    int nalustart = 0;//nal的开始标识符是几个00
+    if (nalus_buf_len < 4) return 1;
     nalu->data = NULL;
 #ifdef PRINT_H264_NALU_RD
     printf("read_first_nalu:  ");
-    for (int i = ipc->nalhead_pos; i < 10; ++i)
+    for (int i = 0; i < 10; ++i)
         printf("0x%02x ", nalus_buf[i]);
     printf("\n");
 #endif
-    while(naltail_pos < nalus_buf_len)  
-    {  
-        //search for nal header   00 00 01 或者 00 00 00 01
-        if(nalus_buf[naltail_pos++] == 0x00 && 
-            nalus_buf[naltail_pos++] == 0x00) 
-        {
-            if(nalus_buf[naltail_pos++] == 0x01)
-            {
-                ipc->nalhead_pos = naltail_pos;
-                nalu->size  = nalus_buf_len - 3;
-            }
-            else 
-            { //cuz we have done an i++ before,so we need to roll back now
-                naltail_pos--;      
-                if(nalus_buf[naltail_pos++] == 0x00 && 
-                    nalus_buf[naltail_pos++] == 0x01)
-                {
-                    ipc->nalhead_pos = naltail_pos;
-                    nalu->size = nalus_buf_len - 4;
-                }
-                else
-                    continue;
-            }
-        }
-        else 
-            continue;
-        
-        nalu->type = nalus_buf[naltail_pos] & 0x1f; 
-        nalu->data = nalus_buf + ipc->nalhead_pos;
+     //search for nal header   00 00 01 or 00 00 00 01
+    if (   nalus_buf[0] == 0x00
+        && nalus_buf[1] == 0x00
+        && nalus_buf[2] == 0x01)
+    {
+        nalustart = 3;
 
-        return 0;           
+    }else
+    if (   nalus_buf[0] == 0x00
+        && nalus_buf[1] == 0x00
+        && nalus_buf[2] == 0x00
+        && nalus_buf[3] == 0x01)
+    {
+        nalustart = 4;
     }
+    
+    nalu->type = nalus_buf[nalustart] & 0x1f; 
+    nalu->data = nalus_buf + nalustart;         
+    nalu->size = ipc->full_h264pack_len - nalustart;
 
-    return 1;
+    return 0;
 }
 /*************************************************
-@Description: 从n个nal单元中读取每个nalu(去除00 00 00 01)
-@Input: *nalu  *ipc
-@Output: nalu
-@Return: 遍历读取未结束返回非0
-@Others: *nalu为传入传出参数，没有堆，指向00 00 00 01之后的一个nalu
+@Description: 发送H264数据帧
+@Input: data 存储数据帧内容  size 数据帧的大小  bIsKeyFrame 记录该帧是否为关键帧   nTimeStamp 当前帧的时间戳
+@Output: 
+@Return: 0 - success, others - fail 
+@Others: 
 *************************************************/ 
-int H264_ReadOneNalu(NaluUnit* nalu, struct _ipc* ipc)  
-{    
-    unsigned int naltail_pos = ipc->nalhead_pos;//printf("hea:%d\n", ipc->nalhead_pos);
-    unsigned int *head_pos    = &(ipc->nalhead_pos);
-    int nalustart = 0;//nal的开始标识符是几个00
-    unsigned int nalus_buf_len = ipc->full_h264pack_len;
-    unsigned char *nalus_buf = ipc->full_h264pack;
-    nalu->data = NULL;
-
-    //此处NO_MORE_BUFFER_TO_READ = BUFFER_SIZE + 3， 3是因为下面在最后进行00 00 01(或者00) 判断时加了3次
-    //此处不用担心越界，因为不是指针，是字节数组的下标
-    if((*head_pos) >= nalus_buf_len)
-    {
-        return 1;
-    }
-#ifdef PRINT_H264_NALU_RD
-    printf("read_one_nalu:  ");
-    for (int i = (*head_pos); i < 10; ++i)
-        printf("0x%02x ", nalus_buf[i]);
-    printf("\n");
-#endif
-    while(naltail_pos < nalus_buf_len)  
-    {  
-        //search for nal tail
-        if(nalus_buf[naltail_pos++] == 0x00 && 
-            nalus_buf[naltail_pos++] == 0x00) 
-        {
-            if(nalus_buf[naltail_pos++] == 0x01)
-            {   
-                nalustart = 3;
-            }
-            else 
-            {
-                //cuz we have done an i++ before,so we need to roll back now
-                naltail_pos--;      
-                if(nalus_buf[naltail_pos++] == 0x00 && 
-                    nalus_buf[naltail_pos++] == 0x01)
-                {
-                    nalustart = 4;
-                }
-                else
-                    continue;
-            }
-        }
-        else 
-            continue;
-        if ((*head_pos) == 0)
-        {
-            (*head_pos) = naltail_pos;//每次都会将ipc->nalhead_pos指向nalu 00 00 00 01之后
-            continue;
-        }
-        // middle ones
-        nalu->type = nalus_buf[(*head_pos)] & 0x1f; 
-        nalu->size = naltail_pos - (*head_pos) - nalustart;
-        if(nalu->type == NALU_TYPE_SEI || nalu->type == NALU_TYPE_AUD)//如果是补充增强信息 (SEI) or 分界符数据
-        {
-            (*head_pos) = naltail_pos;
-            continue;
-        }
-        nalu->data = nalus_buf + (*head_pos);
-        (*head_pos) = naltail_pos;
-        return 0;                   
-    }
-
-    if (naltail_pos >= nalus_buf_len)//not find more 00 00 00 01 or 00 00 01, the last one
-    {
-        // printf("tail:%d, head:%d \n", naltail_pos, (*head_pos));
-        nalu->type = nalus_buf[(*head_pos)] & 0x1f; 
-        nalu->size = nalus_buf_len - (*head_pos);
-        if(nalu->type == NALU_TYPE_SEI || nalu->type == NALU_TYPE_AUD)//如果是补充增强信息 (SEI) or 分界符数据
-        {
-            (*head_pos) = naltail_pos;
-            return 7;
-        }
-        nalu->data = nalus_buf + (*head_pos);
-        (*head_pos) = naltail_pos;
-        return 0; 
-    }
-
-    return 6;  
-} 
-
-/**
- * 发送H264数据帧
- *
- * @param data 存储数据帧内容
- * @param size 数据帧的大小
- * @param bIsKeyFrame 记录该帧是否为关键帧
- * @param nTimeStamp 当前帧的时间戳
- *
- * @成功则返回 0, 失败则返回-1
- */
 int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc* ipc)  
 { 
     if(data == NULL && size < 11){  
@@ -257,7 +131,7 @@ int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame,
     int i = 0; 
     if(bIsKeyFrame){  
         body[i++] = 0x17;// 1:Iframe  7:AVC   
-        body[i++] = 0x01;// AVC NALU   
+        body[i++] = 0x01;// AVC NALU_TYPE_AUDU   
         body[i++] = 0x00;  
         body[i++] = 0x00;  
         body[i++] = 0x00;  
@@ -285,8 +159,7 @@ int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame,
         memcpy(&(body[i]), data, size);  
     }  
 
-    int bRet = 0;
-    bRet = H264_SendPacket(ipc->rtmp, RTMP_PACKET_TYPE_VIDEO, body, i + size, nTimeStamp);  
+    int bRet = H264_SendPacket(ipc->rtmp, RTMP_PACKET_TYPE_VIDEO, body, i + size, nTimeStamp);  
     if (body != NULL)
     {
         free(body);
@@ -295,31 +168,24 @@ int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame,
     
     return bRet;  
 } 
-/**
- * 发送视频的sps和pps信息
- *
- * @param pps 存储视频的pps信息
- * @param pps_len 视频的pps信息长度
- * @param sps 存储视频的pps信息
- * @param sps_len 视频的sps信息长度
- *
- * @成功则返回 1 , 失败则返回0
- */
+/*************************************************
+@Description: 发送视频的sps和pps信息
+@Input: pps 存储视频的pps信息  pps_len 视频的pps信息长度  sps 存储视频的pps信息  sps_len 视频的sps信息长度
+@Output: 
+@Return: 0 - fail 
+@Others: 
+*************************************************/ 
 int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned char * sps, int sps_len, unsigned int nTimestamp)
 {
     RTMPPacket * packet  = NULL;//rtmp包结构
     unsigned char * body = NULL;
-    int i;
-    // packet = (RTMPPacket *)malloc(RTMP_HEAD_SIZE + 1024);
-    // RTMPPacket_Reset(packet);//重置packet状态
-    // // memset(packet, 0, RTMP_HEAD_SIZE + 1024);
-    // packet->m_body = (char *)packet + RTMP_HEAD_SIZE;
+
     packet = (RTMPPacket *)malloc(sizeof(RTMPPacket));
     RTMPPacket_Alloc(packet, 32766);  
     RTMPPacket_Reset(packet); 
 
     body = (unsigned char *)packet->m_body;
-    i = 0;
+    int i = 0;
     body[i++] = 0x17;
     body[i++] = 0x00;
 
@@ -371,16 +237,13 @@ int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned c
 
     return nRet;
 }
-/**
- * 发送RTMP数据包
- *
- * @param nPacketType 数据类型
- * @param data 存储数据内容
- * @param size 数据大小
- * @param nTimestamp 当前包的时间戳
- *
- * @成功则返回 1 , 失败则返回一个小于0的数
- */
+/*************************************************
+@Description: 发送RTMP数据包
+@Input: nPacketType 数据类型  data 存储数据内容  size 数据大小  nTimestamp 当前包的时间戳
+@Output: 
+@Return: 成功则返回 1 , 失败则返回一个小于0的数
+@Others: 
+*************************************************/ 
 int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,unsigned char *data,unsigned int size,unsigned int nTimestamp)  
 {  
     RTMPPacket* packet;
@@ -388,9 +251,7 @@ int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,unsigned char *data,uns
     packet = (RTMPPacket *)malloc(sizeof(RTMPPacket));
     RTMPPacket_Alloc(packet, size);  //actully alloc "body"
     RTMPPacket_Reset(packet);  
-    // memset(packet, 0, RTMP_HEAD_SIZE + size);
     /*包体内存*/
-    // packet->m_body              = (char *)packet + RTMP_HEAD_SIZE;
     memcpy(packet->m_body, data, size);
     packet->m_nBodySize         = size;
     packet->m_hasAbsTimestamp   = 0;

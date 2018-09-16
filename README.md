@@ -70,3 +70,11 @@ Once there is a preview request, this kit can collect the streaming and transfor
 ##### description:
 * Change the file name of ps/h264 parser and some function name in 'conv' to look more clear.
 * Change the **struct _ipc**, remove 'm_pFileBuf' because its duplication with 'full_h264pack'.
+
+------------------------------
+##### date:       2018-09-16
+##### version:    v1.4.6
+##### description:
+* Change some functions in parser_h264.c, especially **H264_SendToRtmp**, to make it more simple.
+* Change the return value of functions in parser_ps.c.
+* Simplify many functions and data structures in the whole project.

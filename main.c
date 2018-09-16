@@ -118,9 +118,6 @@ int main()
                         && IPCs[int_dev_id].online_state == IPCS_ONLINE)//must be on line!
                     { 
                     /***********************start pushing!!!************************/ 
-                        // if (IPCs[int_dev_id].online_state == IPCS_OFFLINE
-                        //     || IPCs[int_dev_id].push_state == IPCS_PUSHING_STREAM) 
-                        //     continue;
                         LOG_Print(ERR_NONE, "Starting device_id:%s, login_id:%ld .......\n"
                             , IPCs[int_dev_id].dev_id, IPCs[int_dev_id].login_id); 
                         if (IPCS_PushInit(&(IPCs[int_dev_id])))
@@ -180,9 +177,6 @@ int main()
                 interval = GetTimeInterval(&(IPCs[i].last_req_time), &time_now); // us
                 if ( interval > IPCS_HEARTBEAT_INVL ) //user has left the web page(none heartbeat packs)
                 {
-                    // if (IPCs[i].online_state == IPCS_OFFLINE
-                    //     || IPCs[i].push_state == IPCS_NOT_PUSHING_STREAM)//and must be pushing!
-                    //     continue;
                     /**************************stop preview************************/
                     // LOG_Print(ERR_NONE, "[%d]the interval:%ld \n", i, interval);
                     LOG_Print(ERR_NONE, "Stoping device_id:%s, login_id:%ld .......\n", IPCs[i].dev_id, IPCs[i].login_id);            
@@ -214,15 +208,6 @@ int main()
 
     return 0;
 }
-
-/** 
-  * 计算两个时间的间隔，得到时间差 
-  * @param struct timeval* resule 返回计算出来的时间 
-  * @param struct timeval* x 需要计算的前一个时间 
-  * @param struct timeval* y 需要计算的后一个时间 
-  * return -1 failure ,0 success 
-  * us
-**/  
 unsigned long GetTimeInterval(struct timeval* start, struct timeval* end)  
 {  
     unsigned long diff = 1000000 * (end->tv_sec - start->tv_sec) + end->tv_usec - start->tv_usec;
