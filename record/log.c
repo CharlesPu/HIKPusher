@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>//close、read、write函数需要
 #include <time.h>
 #include <stdarg.h>
 #include "log.h"
@@ -39,12 +40,13 @@ int LOG_Save(char* data, int len)
 	time(&now);
 	timenow = localtime(&now);
 	// printf("Local time is %s", asctime(timenow));
+	pthread_mutex_lock(&gLOG_out_file_mutex);
 	/* the file name */
 	sprintf(file_name, "%slog_%d%02d%02d", LOG_OUT_PATH, 
 				timenow->tm_year + 1900, timenow->tm_mon + 1, timenow->tm_mday);
 	// printf("%s\n", file_name);
-	pthread_mutex_lock(&gLOG_out_file_mutex);
-	gLOG_out_fd = fopen(file_name, "a+");
+	if (access(file_name, F_OK) == -1 || gLOG_out_fd == NULL)//file not exists or not null
+		gLOG_out_fd = fopen(file_name, "a+");
 	fwrite(data, len, 1, gLOG_out_fd);
 	fflush(gLOG_out_fd);//write immediately from sys buf
 	pthread_mutex_unlock(&gLOG_out_file_mutex);

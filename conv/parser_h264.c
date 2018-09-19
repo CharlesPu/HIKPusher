@@ -98,7 +98,6 @@ int H264_ParserNALU(NalUnit* nalu, struct _ipc* ipc)
         && nalus_buf[2] == 0x01)
     {
         nalustart = 3;
-
     }else
     if (   nalus_buf[0] == 0x00
         && nalus_buf[1] == 0x00

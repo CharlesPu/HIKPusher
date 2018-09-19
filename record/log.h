@@ -1,8 +1,6 @@
 #ifndef __PUSH_LOG_H__
 #define __PUSH_LOG_H__
 
-#include <unistd.h>//close、read、write函数需要
-
 /* error num */
 #define ERR_NONE 	0
 #define ERR_1		1
