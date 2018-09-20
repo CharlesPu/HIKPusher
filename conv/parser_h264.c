@@ -62,7 +62,7 @@ int H264_SendToRtmp(struct _ipc* ipc)
             int bKeyframe  = (nalUnit.type == NALU_TYPE_IDR) ? TRUE : FALSE; // key frame
             H264_SendH264Packet(nalUnit.data, nalUnit.size, bKeyframe, ipc->tick, ipc);
 #ifdef PRINT_RTMP_SEND_SIZE
-            LOG_Print(ERR_NONE, "%s NALU size:%8d\n", ipc->dev_id, nalUnit.size);
+            LOG_INFO("%s NALU size:%8d\n", ipc->dev_id, nalUnit.size);
 #endif
             ipc->tick += ipc->tick_gap; 
             msleep(RTMP_SEND_INTVL);
@@ -98,6 +98,7 @@ int H264_ParserNALU(NalUnit* nalu, struct _ipc* ipc)
         && nalus_buf[2] == 0x01)
     {
         nalustart = 3;
+
     }else
     if (   nalus_buf[0] == 0x00
         && nalus_buf[1] == 0x00
@@ -224,7 +225,7 @@ int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned c
     int nRet = RTMP_SendPacket(rtmp, packet, TRUE);
     if (!nRet)
     {  
-        LOG_Print(ERR_NONE, "RTMP Send Error\n");  
+        LOG_ERROR(ERR_RTMP_SEND, "RTMP Send Error\n");  
         // RTMP_Log(RTMP_LOGERROR,"Send Error\n");  
     }
     if (packet != NULL)

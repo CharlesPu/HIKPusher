@@ -53,7 +53,7 @@ int LOG_Save(char* data, int len)
 
 	return 0;
 }
-int LOG_Print(unsigned int err_n, const char* format, ...)
+int LOG_Print(const char *log_type, int err_n, int line_n, const char *func_name, const char* format, ...)
 {
 	char buf[LOG_CONTENT_MAX_SIZE * 2] = {0};
 	char data[LOG_CONTENT_MAX_SIZE] = {0};
@@ -68,15 +68,20 @@ int LOG_Print(unsigned int err_n, const char* format, ...)
 	time(&now);
 	timenow = localtime(&now);
 	/*add the header of the data*/
-	int len = sprintf(buf, "[LOG %d-%02d-%02d %02d:%02d:%02d] ", 
+	int len = sprintf(buf, "[%s %d-%02d-%02d %02d:%02d:%02d]", log_type,
 				timenow->tm_year + 1900, timenow->tm_mon + 1, timenow->tm_mday, 
 				timenow->tm_hour, timenow->tm_min, timenow->tm_sec);
-	len += sprintf(buf + len, "%s", data);
+	if (!strcmp(log_type, "ERROR"))
+		len += sprintf(buf + len, "[ %d ]", err_n);
+	len += sprintf(buf + len, " <%d>", line_n);
+	len += sprintf(buf + len, "<%s>", func_name);
+	len += sprintf(buf + len, " %s", data);
 	// printf("buf_len:%d,buf: %s", len, buf);
 	printf("%s", buf);
 	fflush(stdout);//write immediately from sys buf
 #ifdef LOG_SAVE
-	LOG_Save(buf, len);
+	if (strcmp(log_type, "DEBUG"))
+		LOG_Save(buf, len);
 #endif
 	return 0;
 }

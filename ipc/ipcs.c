@@ -79,7 +79,7 @@ int IPCS_PushInit(struct _ipc *ipc)
     if(!RTMP_SetupURL(rtmp, (char*)url_tmp))  
     {  
        // RTMP_Log(RTMP_LOGERROR, "SetupURL Err\n"); 
-       LOG_Print(ERR_NONE, "RTMP SetupURL Err\n");
+       LOG_ERROR(ERR_RTMP_SET_URL, "RTMP SetupURL Err\n");
        RTMP_Free(rtmp);  
        return 1;  
     }  
@@ -88,13 +88,13 @@ int IPCS_PushInit(struct _ipc *ipc)
 
     if (!RTMP_Connect(rtmp, NULL)){  
        // RTMP_Log(RTMP_LOGERROR, "Connect Err\n");  
-       LOG_Print(ERR_NONE, "RTMP Connect Err\n");
+       LOG_ERROR(ERR_RTMP_CONNECT, "RTMP Connect Err\n");
        RTMP_Free(rtmp);  
        return 2;  
     }  
 
     if (!RTMP_ConnectStream(rtmp, 0)){  
-       LOG_Print(ERR_NONE, "RTMP ConnectStream Err\n");
+       LOG_ERROR(ERR_RTMP_CONNECT_STREAM, "RTMP ConnectStream Err\n");
        // RTMP_Log(RTMP_LOGERROR, "ConnectStream Err\n");  
        RTMP_Close(rtmp);  
        RTMP_Free(rtmp);  

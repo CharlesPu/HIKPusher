@@ -28,7 +28,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
           unsigned short int_dev_id = IPCS_GetInt_Devid(pDevInfo->byDeviceID, strlen((char*)(pDevInfo->byDeviceID)));
           IPCs[int_dev_id].login_id = lUserID;
           IPCs[int_dev_id].online_state = IPCS_ONLINE;
-          LOG_Print(ERR_NONE, "On-line, lUserID: %ld, Device ID: %s\n", IPCs[int_dev_id].login_id, pDevInfo->byDeviceID);
+          LOG_INFO("On-line, lUserID: %ld, Device ID: %s\n", IPCs[int_dev_id].login_id, pDevInfo->byDeviceID);
        }
        //输入参数
        NET_EHOME_SERVER_INFO *pServerInfo = (NET_EHOME_SERVER_INFO *)pInBuffer;
@@ -37,7 +37,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
     }
     else if (ENUM_DEV_OFF == dwDataType)
     {
-        LOG_Print(ERR_NONE, "Off-line, lUserID: %d", lUserID);
+        LOG_INFO("Off-line, lUserID: %d", lUserID);
         for (int i = 0; i < IPCS_MAX_NUM; ++i)
         {
             if (IPCs[i].login_id == lUserID)
@@ -48,7 +48,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
                 IPCs[i].login_id            = -1;
                 IPCs[i].stream_handle       = -1;
                 IPCs[i].preview_session_id  = -1;
-                LOG_Print(ERR_NONE, ", Device ID: %s\n", IPCs[i].dev_id);
+                LOG_INFO(", Device ID: %s\n", IPCs[i].dev_id);
                 break;
             }
         }
@@ -111,7 +111,7 @@ void CALLBACK fnPREVIEW_DATA_CB(LONG lPreviewHandle, NET_EHOME_PREVIEW_CB_MSG *p
 //VTDU预览请求回应回调函数
 BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG *pNewLinkCBMsg, void *pUserData)
 {
-    LOG_Print(ERR_NONE, "Callback of preview listening, Device ID: %s, Channel: %d\n", pNewLinkCBMsg->szDeviceID, pNewLinkCBMsg->dwChannelNo);
+    LOG_INFO("Callback of preview listening, Device ID: %s, Channel: %d\n", pNewLinkCBMsg->szDeviceID, pNewLinkCBMsg->dwChannelNo);
     unsigned short int_dev_id = IPCS_GetInt_Devid(pNewLinkCBMsg->szDeviceID, strlen((char*)(pNewLinkCBMsg->szDeviceID)));
     IPCs[int_dev_id].stream_handle = lPreviewHandle;//printf("hand%ld\n", IPCs[int_dev_id].stream_handle);
     //预览数据回调参数
@@ -121,10 +121,10 @@ BOOL CALLBACK fnPREVIEW_NEWLINK_CB(LONG lPreviewHandle, NET_EHOME_NEWLINK_CB_MSG
 
     if (!NET_ESTREAM_SetPreviewDataCB(IPCs[int_dev_id].stream_handle, &struDataCB))
     {
-        LOG_Print(ERR_NONE, "NET_ESTREAM_SetPreviewDataCB failed, error code: %d\n", NET_ESTREAM_GetLastError());
+        LOG_ERROR(ERR_VTDU_SETCB, "NET_ESTREAM_SetPreviewDataCB failed, error code: %d\n", NET_ESTREAM_GetLastError());
         return FALSE;
     }
-    LOG_Print(ERR_NONE, "NET_ESTREAM_SetPreviewDataCB!\n");
+    LOG_INFO("NET_ESTREAM_SetPreviewDataCB!\n");
 
     return TRUE;
 }

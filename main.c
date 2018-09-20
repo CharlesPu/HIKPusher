@@ -31,7 +31,7 @@ int main()
     signal(SIGINT, FreeAll);//ctrl + c signal handler
     IPCS_Init();
 	REQ_ServerInit(&req_srv);
-    LOG_Print(ERR_NONE, "REQ_Listen_Server start listen! port:%d\n", REQ_SRV_PORT);
+    LOG_INFO("REQ_Listen_Server start listen! port:%d\n", REQ_SRV_PORT);
     //流媒体服务器(VTDU)监听取流
     //取流库初始化
     NET_ESTREAM_Init();
@@ -46,11 +46,11 @@ int main()
     gpreview_listen_handle = NET_ESTREAM_StartListenPreview(&struListen);
     if(gpreview_listen_handle < -1)
     {
-        LOG_Print(ERR_NONE, "NET_ESTREAM_StartListenPreview failed, error code: %d\n", NET_ESTREAM_GetLastError());
+        LOG_ERROR(ERR_VTDU_START, "NET_ESTREAM_StartListenPreview failed, error code: %d\n", NET_ESTREAM_GetLastError());
         NET_ESTREAM_Fini();
         return 1;
     }
-    LOG_Print(ERR_NONE, "NET_ESTREAM_StartListenPreview! port:%d\n", NET_ESTREAM_PORT);
+    LOG_INFO( "NET_ESTREAM_StartListenPreview! port:%d\n", NET_ESTREAM_PORT);
     ////////////////////////////////////////////////////////////////////////
     //CMS注册和预览请求
     //CMS注册模块初始化
@@ -64,11 +64,11 @@ int main()
     glisten_handle = NET_ECMS_StartListen(&struCMSListenPara);
     if(glisten_handle < -1)
     {
-        LOG_Print(ERR_NONE, "NET_ECMS_StartListen failed, error code: %d\n", NET_ECMS_GetLastError());
+        LOG_ERROR(ERR_CMS_START, "NET_ECMS_StartListen failed, error code: %d\n", NET_ECMS_GetLastError());
         NET_ECMS_Fini();
         return 2;
     }
-    LOG_Print(ERR_NONE, "NET_ECMS_StartListen! port:%d\n", NET_ECMS_PORT);
+    LOG_INFO("NET_ECMS_StartListen! port:%d\n", NET_ECMS_PORT);
 
     while(1) 
     {
@@ -76,13 +76,14 @@ int main()
 		int fd_num = epoll_wait(req_srv.ep_fd, req_srv.evts, REQ_SRV_CLIE_MAX_NUM, IPCS_EPOLL_WAIT_TIME);
 		if (fd_num < 0)
 		{
+            LOG_ERROR(ERR_EPOLL_WAIT, "epoll_wait fail");
 			perror("epoll_wait fail\n");
             sleep(1);
 			continue;
 		}else
         if (fd_num == 0)
         {
-            printf("There is no preview request now!\n");
+            LOG_DEBUG("There is no preview request now!\n");
             // continue;
         }
         struct timeval time_now;
@@ -102,10 +103,13 @@ int main()
 				{//先从红黑树上删除此节点
 					int res = epoll_ctl(req_srv.ep_fd, EPOLL_CTL_DEL, sock_tmp, NULL);  
 					if (res == -1)
+                    {
+                        LOG_ERROR(ERR_EPOLL_CTL_DEL, "epoll_ctl_delete fail!");
 						perror("epoll_ctl_delete fail!\r\n");
+                    }
 					close(sock_tmp);//一定要释放掉此socket!!!!
 #ifdef PRINT_REQ_LINK
-					LOG_Print(ERR_NONE, "%s:%d, clie_fd:%d closed connection\n\n"
+					LOG_INFO("%s:%d, clie_fd:%d closed connection\r\n"
                         , inet_ntoa(req_srv.clie_addr.sin_addr), ntohs(req_srv.clie_addr.sin_port), sock_tmp);
 #endif	
     			}else 
@@ -118,11 +122,14 @@ int main()
                         && IPCs[int_dev_id].online_state == IPCS_ONLINE)//must be on line!
                     { 
                     /***********************start pushing!!!************************/ 
-                        LOG_Print(ERR_NONE, "Starting device_id:%s, login_id:%ld .......\n"
+                        // if (IPCs[int_dev_id].online_state == IPCS_OFFLINE
+                        //     || IPCs[int_dev_id].push_state == IPCS_PUSHING_STREAM) 
+                        //     continue;
+                        LOG_INFO("Starting device_id:%s, login_id:%ld .......\n"
                             , IPCs[int_dev_id].dev_id, IPCs[int_dev_id].login_id); 
                         if (IPCS_PushInit(&(IPCs[int_dev_id])))
                         {
-                            LOG_Print(ERR_NONE, "RTMP_init failed! dev_id:%s, login_id:%ld\n"
+                            LOG_ERROR(ERR_IPC_PUSH_INIT, "RTMP_init failed! dev_id:%s, login_id:%ld\n"
                                 , IPCs[int_dev_id].dev_id, IPCs[int_dev_id].login_id);
                             IPCS_PushFree(&(IPCs[int_dev_id]));
                             continue;
@@ -139,7 +146,7 @@ int main()
                         //预览请求
                         if(!NET_ECMS_StartGetRealStreamV11(IPCs[int_dev_id].login_id, &struPreviewIn, &struPreviewOut))
                         {
-                            LOG_Print(ERR_NONE, "NET_ECMS_StartGetRealStreamV11 failed, error code: %d\n", NET_ECMS_GetLastError());
+                            LOG_ERROR(ERR_CMS_STREAM_START, "NET_ECMS_StartGetRealStreamV11 failed, error code: %d\n", NET_ECMS_GetLastError());
                             IPCS_PushFree(&(IPCs[int_dev_id]));
                             continue;
                         }
@@ -155,11 +162,11 @@ int main()
                         //向设备发送命令请求开始发送实时码流，EHOME协议版本大于等于4.0的设备支持
                         if(!NET_ECMS_StartPushRealStream(IPCs[int_dev_id].login_id, &struPushStreamIn, &struPushStreamOut))
                         {
-                            LOG_Print(ERR_NONE, "NET_ECMS_StartPushRealStream failed, error code: %d\n", NET_ECMS_GetLastError());
+                            LOG_ERROR(ERR_CMS_STREAM_PUSH, "NET_ECMS_StartPushRealStream failed, error code: %d\n", NET_ECMS_GetLastError());
                             IPCS_PushFree(&(IPCs[int_dev_id]));
                             continue;
                         }
-                        LOG_Print(ERR_NONE, "NET_ECMS_StartPushRealStream! dev_id:%s, login_id:%ld\n"
+                        LOG_INFO("NET_ECMS_StartPushRealStream! dev_id:%s, login_id:%ld\n"
                             , IPCs[int_dev_id].dev_id, IPCs[int_dev_id].login_id);
                         /*remember change the push_state*/
                         IPCs[int_dev_id].push_state = IPCS_PUSHING_STREAM;
@@ -177,24 +184,27 @@ int main()
                 interval = GetTimeInterval(&(IPCs[i].last_req_time), &time_now); // us
                 if ( interval > IPCS_HEARTBEAT_INVL ) //user has left the web page(none heartbeat packs)
                 {
+                    // if (IPCs[i].online_state == IPCS_OFFLINE
+                    //     || IPCs[i].push_state == IPCS_NOT_PUSHING_STREAM)//and must be pushing!
+                    //     continue;
                     /**************************stop preview************************/
                     // LOG_Print(ERR_NONE, "[%d]the interval:%ld \n", i, interval);
-                    LOG_Print(ERR_NONE, "Stoping device_id:%s, login_id:%ld .......\n", IPCs[i].dev_id, IPCs[i].login_id);            
+                    LOG_INFO("Stoping device_id:%s, login_id:%ld .......\n", IPCs[i].dev_id, IPCs[i].login_id);            
                     //释放CMS预览请求资源
                     if(!NET_ECMS_StopGetRealStream(IPCs[i].login_id, IPCs[i].preview_session_id))
                     {
-                        LOG_Print(ERR_NONE, "NET_ECMS_StopGetRealStream failed, error code: %d\n", NET_ECMS_GetLastError());
+                        LOG_ERROR(ERR_CMS_STREAM_STOP, "NET_ECMS_StopGetRealStream failed, error code: %d\n", NET_ECMS_GetLastError());
                     }
                     //VTDU停止预览
                     if(IPCs[i].stream_handle >= 0)
                     {
                         if (!NET_ESTREAM_StopPreview(IPCs[i].stream_handle))
                         {
-                            LOG_Print(ERR_NONE, "NET_ESTREAM_StopPreview failed, error code: %d\n", NET_ECMS_GetLastError());
+                            LOG_ERROR(ERR_VTDU_STOP, "NET_ESTREAM_StopPreview failed, error code: %d\n", NET_ECMS_GetLastError());
                         }
                     }
                     IPCS_PushFree(&(IPCs[i]));
-                    LOG_Print(ERR_NONE, "NET_ECMS_StopPushRealStream! dev_id:%s, login_id:%ld\n", IPCs[i].dev_id, IPCs[i].login_id);
+                    LOG_INFO("NET_ECMS_StopPushRealStream! dev_id:%s, login_id:%ld\n", IPCs[i].dev_id, IPCs[i].login_id);
                     /*remember change the push_state*/
                     IPCs[i].push_state = IPCS_NOT_PUSHING_STREAM;
                 }
@@ -219,20 +229,20 @@ void FreeAll(int sig_num)
     // LOG_Print(ERR_NONE, "sig_num:%d\n", sig_num);
     //CMS停止监听
     if(!NET_ECMS_StopListen(glisten_handle))
-        LOG_Print(ERR_NONE, "NET_ECMS_StopListen failed, error code: %d\n", NET_ECMS_GetLastError());
+        LOG_ERROR(ERR_CMS_STOP, "NET_ECMS_StopListen failed, error code: %d\n", NET_ECMS_GetLastError());
     //CMS库反初始化，释放资源
     NET_ECMS_Fini();
     //VTDU停止预览监听
     if(gpreview_listen_handle >= 0)
         if (!NET_ESTREAM_StopListenPreview(gpreview_listen_handle))
-            LOG_Print(ERR_NONE, "NET_ESTREAM_StopListenPreview failed, error code: %d\n", NET_ECMS_GetLastError());
+            LOG_ERROR(ERR_VTDU_STOP, "NET_ESTREAM_StopListenPreview failed, error code: %d\n", NET_ECMS_GetLastError());
     //取流库反初始化，释放资源
     NET_ESTREAM_Fini();
     REQ_FreeServer(&req_srv);  
     for (int i = 0; i < IPCS_MAX_NUM; ++i)
         if (IPCs[i].push_state == IPCS_PUSHING_STREAM)
             IPCS_PushFree(&(IPCs[i]));
-    LOG_Print(ERR_NONE, "Exit!\n");
+    LOG_INFO("Exit!\n");
     LOG_Free();
     exit(0);
 }

@@ -52,7 +52,7 @@ int RTP_SendToRtmp(struct _ipc *ipc, char* buffer, int length)
         {  //接着就是流包
             if(!PS_ParserPESPacket(&next_posi, &left_len, &PayloadData, &PayloadDataLen))  
             {  
-                if(PayloadDataLen >= 3)//防止PayloadData[]寻址出错 
+                if(PayloadDataLen >= 3) //防止PayloadData[]寻址出错 
                 {   
                     // for (int i = 0 ; i < 10; ++i)
                     //     printf("%02x ", (unsigned char)PayloadData[i]); 

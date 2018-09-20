@@ -78,3 +78,11 @@ Once there is a preview request, this kit can collect the streaming and transfor
 * Change some functions in parser_h264.c, especially **H264_SendToRtmp**, to make it more simple.
 * Change the return value of functions in parser_ps.c.
 * Simplify many functions and data structures in the whole project.
+
+------------------------------
+##### date:       2018-09-20
+##### version:    v1.4.8
+##### description:
+* Change log.c, divide logs into different types--INFO, WARN, ERROR, DEBUG.
+* Change the format of record: [INFO/WARN/ERROR/DEBUG time]\([error_num]\) \<line_num\>\<func_name\> content
+* Fix some mutex bugs when save log files.

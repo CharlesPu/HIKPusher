@@ -34,7 +34,7 @@ int REQ_ServerInit(struct _srv *server)
 	server->listen_fd = socket(AF_INET, SOCK_STREAM, 0);//创建套接字
 	if (server->listen_fd == -1)
 	{
-		LOG_Print(ERR_NONE, "fail to creat a socket!");
+		LOG_ERROR(ERR_REQ_FD_GET, "fail to creat a socket!");
 		// perror("error:fail to creat a socket!");
 		return 1;
 	}
@@ -52,7 +52,7 @@ int REQ_ServerInit(struct _srv *server)
 	if (temp == -1)
 	{
 		close(server->listen_fd);
-		LOG_Print(ERR_NONE, "fail to bind port!");
+		LOG_ERROR(ERR_REQ_PORT_BIND, "fail to bind port!");
 		// perror("error:fail to bind port!");
 		return 2;
 	}
@@ -60,7 +60,7 @@ int REQ_ServerInit(struct _srv *server)
 	if (temp == -1)
 	{
 		close(server->listen_fd);
-		LOG_Print(ERR_NONE, "fail to listen!");
+		LOG_ERROR(ERR_REQ_LISTEN, "fail to listen!");
 		// perror("error:fail to listen!");
 		return 3;
 	}
@@ -68,7 +68,7 @@ int REQ_ServerInit(struct _srv *server)
 	server->ep_fd = epoll_create(REQ_SRV_CLIE_MAX_NUM);
 	if (server->ep_fd == -1)
 	{
-		LOG_Print(ERR_NONE, "epoll create error");
+		LOG_ERROR(ERR_REQ_EPOLL_GET, "epoll create error");
 		// perror("epoll create error");
 		return 4;
 	}
@@ -80,7 +80,7 @@ int REQ_ServerInit(struct _srv *server)
 	evt_temp.events  = EPOLLIN ;
 	if(epoll_ctl(server->ep_fd, EPOLL_CTL_ADD, server->listen_fd, &evt_temp) == -1)//挂到红黑树上去
 	{
-		LOG_Print(ERR_NONE, "epoll_ctl listen_fd fail1");
+		LOG_ERROR(ERR_REQ_EPOLL_CTL, "epoll_ctl listen_fd fail1");
 		// perror("epoll_ctl listen_fd fail1");
 		return 6;
 	}
@@ -127,7 +127,7 @@ int REQ_ServerAccept(struct _srv *server)
 
 	if (server->clie_fd == -1)
 	{
-		LOG_Print(ERR_NONE, "accept fail\n");
+		LOG_ERROR(ERR_REQ_ACCEPT, "accept fail\n");
 		// perror("accept fail\n");
 		return 1;
 	}
@@ -138,13 +138,13 @@ int REQ_ServerAccept(struct _srv *server)
 		evt_temp.data.fd= server->clie_fd;
 		if(epoll_ctl(server->ep_fd, EPOLL_CTL_ADD, server->clie_fd, &evt_temp) == -1)//然后挂到红黑树上去
 		{
-			LOG_Print(ERR_NONE, "epoll_ctl clie_fd fail!");
+			LOG_ERROR(ERR_REQ_EPOLL_CTL, "epoll_ctl clie_fd fail!");
 			// perror("epoll_ctl clie_fd fail!");
 			return 2;
 		}
 #ifdef PRINT_REQ_LINK
 		// printf("OK: Server has got connection from %s.\n",inet_ntoa(server->clie_addr.sin_addr));
-		LOG_Print(ERR_NONE, "REQ_Server has connected to %s:%d, clie_fd:%d, connect num:%d\n",
+		LOG_INFO("REQ_Server has connected to %s:%d, clie_fd:%d, connect num:%d\n",
             inet_ntoa(server->clie_addr.sin_addr), ntohs(server->clie_addr.sin_port), server->clie_fd, ++(server->connect_num));//打印连接的客户端的编号
 #endif
 	}	
@@ -163,7 +163,7 @@ int REQ_ServerSend(int fd, unsigned char* buf, int length)
 	int num = write(fd, buf, length);
 	if (num != length)
 	{
-		LOG_Print(ERR_NONE, "send fail!");
+		LOG_ERROR(ERR_REQ_SEND, "send fail!");
 		// perror("send fail!");
 		return -1;
 	}
