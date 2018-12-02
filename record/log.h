@@ -24,8 +24,7 @@
 #define ERR_REQ_ACCEPT				19
 #define	ERR_REQ_SEND				20
 #define ERR_RTMP_SEND				21
-#define ERR_CMS_STOP				21
-#define ERR_RTMP_SEND				21
+#define ERR_CMS_STOP				22
 
 #define LOG_INFO(fmt, ...)	\
 		LOG_Print("INFO", 0, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)

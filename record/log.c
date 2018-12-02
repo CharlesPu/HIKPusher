@@ -1,6 +1,6 @@
 /*******************************
 @@Author     :  Charles
-@@Date       :  2017-08-15
+@@Date       :  2018-08-15
 @@Mail       :  pu17rui@sina.com
 @@Description: 	logs print
 *******************************/
@@ -76,7 +76,8 @@ int LOG_Print(const char *log_type, int err_n, int line_n, const char *func_name
 	len += sprintf(buf + len, " <%d>", line_n);
 	len += sprintf(buf + len, "<%s>", func_name);
 	len += sprintf(buf + len, " %s", data);
-	// printf("buf_len:%d,buf: %s", len, buf);
+
+	// int len = sprintf(buf, "%s", data);
 	printf("%s", buf);
 	fflush(stdout);//write immediately from sys buf
 #ifdef LOG_SAVE

@@ -1,6 +1,6 @@
 /*******************************
 @@Author     : Charles
-@@Date       : 2017-06-04
+@@Date       : 2018-06-04
 @@Mail       : pu17rui@sina.com
 @@Description: 
 	wish that I can transfer RTP to RTMP successfully!!   
@@ -114,10 +114,10 @@ int main()
 #endif	
     			}else 
 				{		
-                    //reg_pack : I P C S 00 0X 0X 0X
-                    //receive_pack : s t a r t : I P C S 00 0X 0X 0X
+                    //reg_pack : I P C S 00 00 0X 0X
+                    //receive_pack : s t a r t : I P C S 00 00 0X 0X
                     unsigned short int_dev_id = IPCS_GetInt_Devid(req_srv.rxbuf + 6, bytes_num - 6);
-                    memcpy(&(IPCs[int_dev_id].last_req_time), &time_now , sizeof(struct timeval));
+                    memcpy(&(IPCs[int_dev_id].last_req_time), &time_now, sizeof(struct timeval));
                     if (IPCs[int_dev_id].push_state == IPCS_NOT_PUSHING_STREAM// must be not pushing!
                         && IPCs[int_dev_id].online_state == IPCS_ONLINE)//must be on line!
                     { 

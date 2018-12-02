@@ -27,19 +27,10 @@ int IPCS_Init(void)
 		IPCs[i].login_id 			= -1;
 		IPCs[i].stream_handle 		= -1;
 		IPCs[i].preview_session_id 	= -1;
-		// memset(IPCs[i].dev_id, 0, strlen(IPCs[i].dev_id));
-		short user_id = i / 256 % 16;
-		short loc_id  = i / 16  % 16;
-		short sta_id  = i % 16;
-		// printf("usr:0x%02x, loc:0x%02x, sta:0x%02x\n", user_id, loc_id, sta_id);
-		// char str_user_id[2] = {0};//must be 2 cause the '\0'
-		// char str_loc_id[2]  = {0};
-		// char str_sta_id[2]  = {0};
-		// sprintf(str_user_id, "%x", user_id);
-		// sprintf(str_loc_id, "%x", loc_id);
-		// sprintf(str_sta_id, "%x", sta_id);
-		// printf("usr:%s, loc:%s, sta:%s\n", str_user_id, str_loc_id, str_sta_id);
-		sprintf(IPCs[i].dev_id, "IPCS000%x0%x0%x", user_id, loc_id, sta_id);
+
+		short co_id 	= i / 16 % 16;
+		short sta_id  	= i % 16;
+		sprintf(IPCs[i].dev_id, "IPCS00000%x0%x", co_id, sta_id);
 		// printf("dev_id:%s \n", IPCs[i].dev_id);
 
 		memset(&(IPCs[i].last_req_time), 0, sizeof(IPCs[i].last_req_time));
@@ -47,14 +38,12 @@ int IPCS_Init(void)
 		IPCs[i].online_state 			= IPCS_OFFLINE;
 
 		IPCs[i].rtmp = NULL;
-		IPCs[i].pps_sps_flag = 0;
 		IPCs[i].full_h264pack = NULL;
 	    IPCs[i].full_h264pack_len = 0;
 	    
 		memset(&(IPCs[i].metaData), 0, sizeof(IPCs[i].metaData));
 		IPCs[i].tick = 0;
 		IPCs[i].tick_gap = 0; 
-		IPCs[i].pps_sps_flag = 0;
 	}
 
 	return 0;
@@ -108,7 +97,6 @@ int IPCS_PushInit(struct _ipc *ipc)
     	ipc->full_h264pack[i] = 0;
     ipc->full_h264pack_len = 0;
 
-    ipc->pps_sps_flag = 0;
 	//in case...
 	if (ipc->metaData.Sps != NULL)
 	{
@@ -123,7 +111,6 @@ int IPCS_PushInit(struct _ipc *ipc)
 	memset(&(ipc->metaData), 0, sizeof(ipc->metaData));
 	ipc->tick = 0;
 	ipc->tick_gap = 0; 
-	ipc->pps_sps_flag = 0;
 
     return 0;
 }
@@ -150,7 +137,6 @@ int IPCS_PushFree(struct _ipc *ipc)
     	free(ipc->full_h264pack);
     	ipc->full_h264pack = NULL;
     }
-    ipc->pps_sps_flag = 0;
 	//must free first!
 	if (ipc->metaData.Sps != NULL)
 	{
@@ -165,36 +151,51 @@ int IPCS_PushFree(struct _ipc *ipc)
 	memset(&(ipc->metaData), 0, sizeof(ipc->metaData));
 	ipc->tick = 0;
 	ipc->tick_gap = 0; 
-	ipc->pps_sps_flag = 0;
 
     return 0;
 }
 /*************************************************
 @Description: Get Devid(int)
-@Input: req_serv's recv buf; buf's length
+@Input: req_serv's recv buf except "start"; buf's length
 @Output: 
 @Return: 
-@Others: //reg_pack : I P C S 00 0X 0X 0X
+@Others: reg_pack : I P C S 00 00 0X 0X
 *************************************************/
 unsigned short IPCS_GetInt_Devid(unsigned char *msgs, int len)
 {
-	char str_user_id[2] = {0};//must be 2 cause the '\0'
-	char str_loc_id[2]  = {0};
+	// char str_user_id[2] = {0};//must be 2 cause the '\0'
+	// char str_loc_id[2]  = {0};
+	// char str_sta_id[2]  = {0};
+
+	// if (len < 12)
+	// 	return -1;
+	// memcpy(str_user_id, msgs + 7, 1);
+	// memcpy(str_loc_id, msgs + 9, 1);
+	// memcpy(str_sta_id, msgs + 11, 1);
+	// // printf("usr:%s, loc:%s, sta:%s\n", str_user_id, str_loc_id, str_sta_id);
+
+	// short user_id = strtol(str_user_id, NULL, 16);
+	// short loc_id  = strtol(str_loc_id, NULL, 16);
+	// short sta_id  = strtol(str_sta_id, NULL, 16);
+	// // printf("usr:0x%02x, loc:0x%02x, sta:0x%02x\n", user_id, loc_id, sta_id);
+
+	// unsigned short int_dev_id = (user_id << 8) + (loc_id << 4) + sta_id;
+	// // printf("int_dev_id:%d\n", int_dev_id);
+
+	char str_co_id[2] = {0};//must be 2 cause the '\0'
 	char str_sta_id[2]  = {0};
 
 	if (len < 12)
 		return -1;
-	memcpy(str_user_id, msgs + 7, 1);
-	memcpy(str_loc_id, msgs + 9, 1);
+	memcpy(str_co_id, msgs + 9, 1);
 	memcpy(str_sta_id, msgs + 11, 1);
-	// printf("usr:%s, loc:%s, sta:%s\n", str_user_id, str_loc_id, str_sta_id);
+	// printf("usr:%s, sta:%s\n", str_co_id, str_sta_id);
 
-	short user_id = strtol(str_user_id, NULL, 16);
-	short loc_id  = strtol(str_loc_id, NULL, 16);
-	short sta_id  = strtol(str_sta_id, NULL, 16);
-	// printf("usr:0x%02x, loc:0x%02x, sta:0x%02x\n", user_id, loc_id, sta_id);
+	short co_id  = strtol(str_co_id, NULL, 16);
+	short sta_id = strtol(str_sta_id, NULL, 16);
+	// printf("usr:0x%02x, sta:0x%02x\n", co_id, sta_id);
 
-	unsigned short int_dev_id = (user_id << 8) + (loc_id << 4) + sta_id;
+	unsigned short int_dev_id = (co_id << 4) + sta_id;
 	// printf("int_dev_id:%d\n", int_dev_id);
 
 	return int_dev_id;

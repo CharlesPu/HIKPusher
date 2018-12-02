@@ -39,8 +39,7 @@ struct _ipc
     RTMP *rtmp;
 	RTMPMetadata  metaData;			//元数据
 	unsigned int  tick;
-	unsigned int  tick_gap; 
-	int 	      pps_sps_flag;		//标志第几帧
+	unsigned int  tick_gap;
 };
 
 int IPCS_Init(void);
