@@ -48,7 +48,7 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
                 IPCs[i].login_id            = -1;
                 IPCs[i].stream_handle       = -1;
                 IPCs[i].preview_session_id  = -1;
-                LOG_INFO(", Device ID: %s\n", IPCs[i].dev_id);
+                printf(", Device ID: %s\n", IPCs[i].dev_id);
                 break;
             }
         }

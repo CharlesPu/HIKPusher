@@ -123,13 +123,11 @@ int IPCS_PushInit(struct _ipc *ipc)
 *************************************************/
 int IPCS_PushFree(struct _ipc *ipc)
 {
-	RTMP *rtmp = ipc->rtmp;
-
-	if (rtmp != NULL)
+	if (ipc->rtmp != NULL)
     {  
-       RTMP_Close(rtmp);          
-       RTMP_Free(rtmp);   
-       rtmp = NULL;  
+       RTMP_Close(ipc->rtmp);          
+       RTMP_Free(ipc->rtmp);   
+       ipc->rtmp = NULL;  
     }
     ipc->full_h264pack_len = 0;
     if (ipc->full_h264pack != NULL)
