@@ -19,7 +19,7 @@ INC_DIR 	:= $(ALL_DIRS)
 RTMP_LIB_DIR = ./librtmp/
 EH_LIB_DIR 	 = ./HIK_EHome/eh_lib/
 LIBS_RTMP	 = rtmp
-LIBS_EHOME	 = HCEHomeAlarm HCEHomeCMS HCEHomeStream iconv2 SystemTransform hpr
+LIBS_EHOME	 = HCEHomeCMS HCEHomeStream SystemTransform hpr
 
 LIB_DIR 	:= $(RTMP_LIB_DIR) $(EH_LIB_DIR)
 LIBS 		:= $(LIBS_RTMP) $(LIBS_EHOME)
