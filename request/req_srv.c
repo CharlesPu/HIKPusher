@@ -228,6 +228,11 @@ int REQ_FreeServer(struct _srv *server)
 		close(server->clie_fd);
 		server->clie_fd = 0;
 	}
+	if (server->ep_fd)
+	{
+		close(server->ep_fd);
+		server->ep_fd = 0;
+	}
 
 	return 0;
 }
