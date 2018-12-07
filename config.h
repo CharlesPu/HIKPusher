@@ -8,7 +8,7 @@
 // #define PRINT_REQ_LINK
 
 /**RTMP**/
-#define RTMP_URL "rtmp://x.x.x.x:1935/myapp/"
+#define RTMP_URL "rtmp://localhost:1935/blade_test/"
 #define RTMP_CONNECTION_TIMEOUT 5  //s
 #define RTMP_SEND_INTVL 20  //ms
 
