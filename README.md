@@ -98,3 +98,11 @@ The settings above is mine, and you can also set your own protocol, which must c
 * Change log.c, divide logs into different types--INFO, WARN, ERROR, DEBUG.
 * Change the format of record: [INFO/WARN/ERROR/DEBUG time]\([error_num]\) \<line_num\>\<func_name\> content
 * Fix some mutex bugs when save log files.
+
+---
+##### date:       2019-01-18
+##### version:    v2.0.0
+##### description:
+* Due to the truncation of PS packs during transmission, use two parse buffer: **pespack_buf** and **h264pack_buf** in struct \_ipc to storage a complete pes pack or h264 pack for the following parse.
+* Clarify the parse process into two parser: **PS_Parser** and **H264_Parser**, and make them a chain.
+* May be used in different kinds of HIK devices...

@@ -23,17 +23,19 @@
 #define NALU_TYPE_EOSTREAM 	0x0b
 #define NALU_TYPE_FILL 		0x0c
 
-typedef struct _NalUnit  
+typedef struct 
 {  
 	int type;  
     int size;  
-	unsigned char *data;  
+	char *data;  
 }NalUnit;
 
-int H264_SendToRtmp(struct _ipc* );  
-int H264_ParserNALU(NalUnit* nalu, struct _ipc* ipc);
-int H264_SendH264Packet(unsigned char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc*);
+int H264_Parser(struct _ipc *i, const char *pack, int len);
+int H264_ParserNALU(NalUnit* nalu, char *buf, int length);
+int H264_SendToRtmp(struct _ipc* , const NalUnit* nalu);  
+
+int H264_SendH264Packet(char *data, unsigned int size, int bIsKeyFrame, unsigned int nTimeStamp, struct _ipc*);
 int H264_SendVideoSpsPps(RTMP *rtmp, unsigned char *pps, int pps_len, unsigned char * sps, int sps_len, unsigned int nTimeStamp);
-int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,unsigned char *data,unsigned int size,unsigned int nTimestamp);
+int H264_SendPacket(RTMP *rtmp, unsigned int nPacketType,char *data,unsigned int size,unsigned int nTimestamp);
 
 #endif

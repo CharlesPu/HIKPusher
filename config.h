@@ -13,7 +13,8 @@
 #define RTMP_SEND_INTVL 20  //ms
 
 /*H264*/
-#define H264_FULLPACK_MAX_SIZE 262144
+#define PESPACK_BUF_MAX_SIZE 262144
+#define H264PACK_BUF_MAX_SIZE 262144
 /*******************************************************/
 /*NET_ESTREAM*/
 #define NET_ESTREAM_IP "0.0.0.0"
@@ -48,7 +49,7 @@
 #define IPCS_OFFLINE 0
 
 /*log*/
-#define LOG_SAVE
+// #define LOG_SAVE
 #define LOG_CONTENT_MAX_SIZE 256
 #define LOG_OUT_PATH "./logs/"
 
