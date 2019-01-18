@@ -3,7 +3,7 @@
 > * 参考了CSDN上[@雷霄骅](https://blog.csdn.net/leixiaohua1020)的部分博客，在此向雷神致敬！
 > * 这也是我硕士课题的一部分，目前已经测试通过投入正式运行的环境是：
 >   * **IPC型号:** DS-2CD2T25FD-I3W/R
->   * **服务器:** 阿里云ECS(Ubuntu 16.04 LTS 64位)
+>   * **云服务器规格:** 阿里云ECS(Ubuntu 16.04 LTS 64位)
 >   * **Web端播放器:** JW Player
 >   * **RTMP流媒体服务器:** nginx-rtmp-module
 >   * **Web服务器:** Nginx
