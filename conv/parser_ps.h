@@ -6,6 +6,7 @@
 *******************************/
 #ifndef __PARSER_PS_H__
 #define __PARSER_PS_H__
+#include "ipcs.h"
 
 typedef union //后面要注意大端存放
 {  
@@ -43,5 +44,6 @@ typedef struct
 int PS_ParserHeadPacket(char** Pack, int *length);
 int PS_ParserMapPacket(char** Pack, int *length, char **PayloadData, int *PayloadDataLen);
 int PS_ParserPESPacket(char** Pack, int *length, char **PayloadData, int *PayloadDataLen);
+int PS_Parser(struct _ipc *i, char *pack, int len);
 
 #endif

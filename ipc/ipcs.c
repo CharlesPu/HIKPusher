@@ -38,8 +38,10 @@ int IPCS_Init(void)
 		IPCs[i].online_state 			= IPCS_OFFLINE;
 
 		IPCs[i].rtmp = NULL;
-		IPCs[i].full_h264pack = NULL;
-	    IPCs[i].full_h264pack_len = 0;
+	    IPCs[i].pespack_buf = NULL;
+	    IPCs[i].pespack_buf_len = 0;
+	    IPCs[i].h264pack_buf = NULL;
+	    IPCs[i].h264pack_buf_len = 0;
 	    
 		memset(&(IPCs[i].metaData), 0, sizeof(IPCs[i].metaData));
 		IPCs[i].tick = 0;
@@ -92,10 +94,15 @@ int IPCS_PushInit(struct _ipc *ipc)
     /*this statement must be after the init of rtmp!!*/
     ipc->rtmp = rtmp;
 
-    ipc->full_h264pack = (unsigned char*)malloc(H264_FULLPACK_MAX_SIZE);
-    for (int i = 0; i < H264_FULLPACK_MAX_SIZE; ++i)
-    	ipc->full_h264pack[i] = 0;
-    ipc->full_h264pack_len = 0;
+    ipc->pespack_buf = (char*)malloc(PESPACK_BUF_MAX_SIZE);
+    for (int i = 0; i < PESPACK_BUF_MAX_SIZE; ++i)
+    	ipc->pespack_buf[i] = 0;
+    ipc->pespack_buf_len = 0;
+    ipc->pespack_left_len = 0;
+    ipc->h264pack_buf = (char*)malloc(H264PACK_BUF_MAX_SIZE);
+    for (int i = 0; i < H264PACK_BUF_MAX_SIZE; ++i)
+    	ipc->h264pack_buf[i] = 0;
+    ipc->h264pack_buf_len = 0;
 
 	//in case...
 	if (ipc->metaData.Sps != NULL)
@@ -129,11 +136,18 @@ int IPCS_PushFree(struct _ipc *ipc)
        RTMP_Free(ipc->rtmp);   
        ipc->rtmp = NULL;  
     }
-    ipc->full_h264pack_len = 0;
-    if (ipc->full_h264pack != NULL)
+    ipc->pespack_buf_len = 0;
+    ipc->pespack_left_len = 0;
+    if (ipc->pespack_buf != NULL)
     {
-    	free(ipc->full_h264pack);
-    	ipc->full_h264pack = NULL;
+    	free(ipc->pespack_buf);
+    	ipc->pespack_buf = NULL;
+    }
+    ipc->h264pack_buf_len = 0;
+    if (ipc->h264pack_buf != NULL)
+    {
+    	free(ipc->h264pack_buf);
+    	ipc->h264pack_buf = NULL;
     }
 	//must free first!
 	if (ipc->metaData.Sps != NULL)

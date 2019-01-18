@@ -33,8 +33,11 @@ struct _ipc
 	char push_state;				//是否在推流
 	char online_state;				//是否在线
 	/*解析RTP流相关*/
-	unsigned char *full_h264pack;	//n个nalu的h264裸流包 						(实际1个...)
-    unsigned int  full_h264pack_len;//n个nalu的h264裸流包的大小
+    char *pespack_buf;
+    int pespack_buf_len;
+    int pespack_left_len;
+    char *h264pack_buf;
+    int h264pack_buf_len;
     /*封装RTMP流相关*/
     RTMP *rtmp;
 	RTMPMetadata  metaData;			//元数据
