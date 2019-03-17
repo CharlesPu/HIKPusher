@@ -11,9 +11,20 @@
 #include "parser_h264.h"
 #include "config.h"
 
+/******************************
+**  第一链：PS解析器
+**  传入为RTP原始数据流
+**  处理后传出为一个完整的PES包荷载数据，这个荷载数据实际为n(n>1)个NALU，可能是断的，
+    但是第一链只保证PES荷载数据的完整性，而不保证内容含义的完整性，所以需要第二链
+    自行保证n个NALU的截断和拼接
+**  链缓冲区pespack_buf用来缓冲残缺的PES荷载数据，直到得到完整的一个为止
+******************************/
 int PS_Parser(struct _ipc *ipc, char *rtp_pack, int length)
 {    
-    if (ipc->pespack_left_len) //拼接剩下的
+    /***************************************残余项解析任务 开始***************************************/
+    //残余项长度由PES包头中长度字段得知
+    //由于其它历史遗留信息的存在，接下来的判断过程只需根据pespack_left_len成员判断即可
+    if (ipc->pespack_left_len) //如有残余长度存在，则直接尝试拼接剩下的
     {
         int real_cp_len = ipc->pespack_left_len > length ? length : ipc->pespack_left_len;//取小值
         memcpy(ipc->pespack_buf + ipc->pespack_buf_len, rtp_pack, real_cp_len);
@@ -22,14 +33,16 @@ int PS_Parser(struct _ipc *ipc, char *rtp_pack, int length)
         length -= real_cp_len;
         rtp_pack += real_cp_len;
 
-        if (!(ipc->pespack_left_len))//got a full payloads
+        if (!(ipc->pespack_left_len))//若拼接后发现已经得到了一个完整的PES荷载数据，则直接送入下一链
         {
             H264_Parser(ipc, ipc->pespack_buf, ipc->pespack_buf_len);
             memset(ipc->pespack_buf, 0, PESPACK_BUF_MAX_SIZE);
             ipc->pespack_buf_len = 0;
-        }
+        }//若还是没得到完整的，说明还是有残余项，后面还是要进入此代码
     }
+    /************************************残余项解析任务 结束******************************************/
 
+    //处理完上一次的残余项之后正式开始后续PES解析
     int left_len        = length;  
     char *next_posi     = rtp_pack;   
     char *PayloadData   = NULL;   
@@ -54,13 +67,13 @@ int PS_Parser(struct _ipc *ipc, char *rtp_pack, int length)
                 case '\xE0':
                     if(!PS_ParserPESPacket(&next_posi, &left_len, &PayloadData, &PayloadDataLen))  
                     {  
-                        if (left_len < 0)//如果断了
+                        if (left_len < 0)//如果断了，则存储已有数据，后续需要交由 残余项解析任务 完成
                         {
                             ipc->pespack_left_len = -left_len;
                             int real_cp_len = PayloadDataLen - (-left_len);
                             memcpy(ipc->pespack_buf + ipc->pespack_buf_len, PayloadData, real_cp_len);
                             ipc->pespack_buf_len += real_cp_len;
-                        }else
+                        }else//最完美的情况下是没断，则直接得到一个完整的PES荷载数据，直接送入下一链
                         {
                             H264_Parser(ipc, PayloadData, PayloadDataLen);
                             ipc->pespack_left_len = 0;

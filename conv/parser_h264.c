@@ -15,17 +15,15 @@
 #include "sps_dec.h"
 #include "log.h"
 
+/******************************
+**  第二链：H264解析器
+**  传入为PES包荷载的完整数据
+**  处理时，利用链缓冲区h264pack_buf来拼接残余项，因为可识别程度
+    不如第一链(只能通过下一个NALU的头来截断，而不是NALU长度)
+** 链缓冲区h264pack_buf用来缓冲残缺的n个NALU，始终会留下一个NALU(可能残缺)
+******************************/
 int H264_Parser(struct _ipc *ipc, const char *pes_payload, int pes_payload_len)
 {
-    // printf("len:%d\n", pes_payload_len);
-    // for (int i = 0; i < 50; ++i)
-    //     printf("0x%02x ", (unsigned char)pes_payload[i]);
-    // printf("\n");
-    printf("len:%d\n", ipc->h264pack_buf_len);
-    for (int i = 0; i < 50; ++i)
-        printf("0x%02x ", (unsigned char)ipc->h264pack_buf[i]);
-    printf("\n");
-
     int len_tmp = ipc->h264pack_buf_len + pes_payload_len;
     if ( len_tmp > H264PACK_BUF_MAX_SIZE)
     {
@@ -33,7 +31,8 @@ int H264_Parser(struct _ipc *ipc, const char *pes_payload, int pes_payload_len)
         return 1;
     }
     char *buf_tmp = ipc->h264pack_buf;
-    memcpy(buf_tmp + ipc->h264pack_buf_len, pes_payload, pes_payload_len);//先全部复制到h264缓冲区再处理
+    //这里复制到链缓冲区处理是因为残余项到来时，不像第一链可以根据变量判断，故和之前的拼接起来再集中处理最方便
+    memcpy(buf_tmp + ipc->h264pack_buf_len, pes_payload, pes_payload_len);
     int head = 0, posi = 0;
     for (; posi < len_tmp - 3; ++posi)
     {
@@ -46,9 +45,8 @@ int H264_Parser(struct _ipc *ipc, const char *pes_payload, int pes_payload_len)
             NalUnit nalUnit; 
             int tmp = H264_ParserNALU(&nalUnit, buf_tmp + head, posi - head);
             if (!tmp)//得到一个nalu就发送
-            {
                 H264_SendToRtmp(ipc, &nalUnit);
-            }//解析失败说明posi之前没有nalu或者是错误的nalu，则直接丢弃
+            //解析失败说明posi之前没有nalu或者是错误的nalu，则直接丢弃
             head = posi;//head指向下一个nalu的开始
         }else
         {

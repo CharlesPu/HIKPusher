@@ -33,11 +33,11 @@ struct _ipc
 	char push_state;				//是否在推流
 	char online_state;				//是否在线
 	/*解析RTP流相关*/
-    char *pespack_buf;
-    int pespack_buf_len;
-    int pespack_left_len;
-    char *h264pack_buf;
-    int h264pack_buf_len;
+    char *pespack_buf;				//PES解析器缓冲区，为一个PES包荷载数据
+    int pespack_buf_len;			//当前PES解析器缓冲区中一个PES包荷载数据长度，可能不完整
+    int pespack_left_len;			//下一次需要继续解析的残余长度
+    char *h264pack_buf;				//H264解析器缓冲区，实际为n个NALU
+    int h264pack_buf_len;			//当前H264解析器缓冲区中n个NALU长度，可能不完整
     /*封装RTMP流相关*/
     RTMP *rtmp;
 	RTMPMetadata  metaData;			//元数据
