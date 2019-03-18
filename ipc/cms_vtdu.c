@@ -42,7 +42,16 @@ BOOL CALLBACK RegisterCallBack(LONG lUserID, DWORD dwDataType, void *pOutBuffer,
         {
             if (IPCs[i].login_id == lUserID)
             {
-                IPCS_PushFree(&(IPCs[i]));
+                //如果之前在推流了，注意释放所有资源!
+                if (IPCs[i].push_state == IPCS_PUSHING_STREAM)
+                {         
+                    if(!NET_ECMS_StopGetRealStream(IPCs[i].login_id, IPCs[i].preview_session_id))
+                        LOG_ERROR(ERR_CMS_STREAM_STOP, "NET_ECMS_StopGetRealStream failed, error code: %d\n", NET_ECMS_GetLastError());
+                    if(IPCs[i].stream_handle >= 0)
+                        if (!NET_ESTREAM_StopPreview(IPCs[i].stream_handle))
+                            LOG_ERROR(ERR_VTDU_STOP, "NET_ESTREAM_StopPreview failed, error code: %d\n", NET_ECMS_GetLastError());
+                    IPCS_PushFree(&(IPCs[i]));
+                }
                 IPCs[i].online_state        = IPCS_OFFLINE;
                 IPCs[i].push_state          = IPCS_NOT_PUSHING_STREAM;
                 IPCs[i].login_id            = -1;
